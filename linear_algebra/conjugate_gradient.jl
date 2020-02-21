@@ -44,7 +44,7 @@ function conjugate_gradient!(L, x⁰, b; P = x->x, tolerance = eps(1.0), maximum
         Lp = L(p⁰)
         α = (r⁰' * z⁰) / (p⁰' * Lp)
         # update along preconditioned direction
-        @. x⁰ += α .* p⁰
+        @. x⁰ += α * p⁰
         # form new residual
         r¹ = r⁰ - α .* Lp
         # check to see if the update was reasonable

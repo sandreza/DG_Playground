@@ -274,32 +274,53 @@ function reduce_duplicates(𝒢)
     return A
 end
 
-x⁰ = randn(length(solution))
-prec = zeros(length(x⁰), length(x⁰))
-Δx = x[2:end] - x[1:end-1]
-Δx = @. Δx * Δx
-for i in eachindex(Δx)
-    if Δx[i] == 0
-        Δx[i] = Δx[i+1]
+function reduce_duplicates_tr(𝒢)
+    # n is the polynomial order
+    # K is the number of elements
+    n = 𝒢.n
+    K = 𝒢.K
+    nt = (n+1)*K
+    ni = nt - (K-1)
+    A = zeros(ni,nt)
+    di = 𝒢.vmapM[2:2:end-1]
+    di2 = 𝒢.vmapP[2:2:end-1]
+    ti = collect(1:nt)
+    ndi = setdiff(ti,𝒢.vmapM[2:1:end-1])
+    rdi  = (n+1):n:(ni-1)
+    rndi = setdiff(1:ni, rdi)
+    for i in eachindex(rdi)
+        A[rdi[i], di[i]] = 1.0
+        A[rdi[i], di2[i]] = 1.0
     end
+    for i in eachindex(rndi)
+        A[rndi[i], ndi[i]] = 1.0
+    end
+    return A'
 end
-for i in eachindex(x⁰)
-    if (i < length(x⁰)) && (i >1)
+
+x⁰ = randn(length(solution))
+P = reduce_duplicates(𝒢)
+PP = reduce_duplicates_tr(𝒢)
+x = P * (𝒢.x[:])
+prec = zeros(length(x), length(x))
+Δx = x[2:end] - x[1:end-1]
+Δx = Δx .* Δx
+for i in eachindex(px⁰)
+    if (i < length(px⁰)) && (i >1)
         prec[i,i] = -1/Δx[i] - 1/Δx[i-1] - γ
     elseif i==1
         prec[i,i] = -1/Δx[i] - 1/Δx[i] - γ
     else
         prec[i,i] = -1/ Δx[i-1] - 1/Δx[i-1] - γ
     end
-    if i < length(x⁰)
+    if i < length(px⁰)
         prec[i+1,i] = 1 / Δx[i]
         prec[i,i+1] = prec[i+1,i]
     end
 end
 
-prec = Tridiagonal(prec)
-lu_prec = lu(prec)
-P_tmp(x) = lu_prec \ x
+iprec = P' * inv(prec) * P
+P_tmp(x) = iprec * x
 
 r = conjugate_gradient!(∇²_tmp, x⁰, b, track_residual = true, P = P_tmp)
 println("The relative error is")
