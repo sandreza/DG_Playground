@@ -1,5 +1,8 @@
 # using Optim, Revise
 include("../mcmc_utils/mcmc.jl")
+include("../dg_poisson_operator.jl")
+include("loss_functions.jl")
+include("structured_tridiagonal.jl")
 
 using Random
 m = length(x)

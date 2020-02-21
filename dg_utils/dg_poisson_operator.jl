@@ -106,6 +106,7 @@ function constructLaplacian(𝒢, periodic, τ)
     dq = similar(ι.flux)
 
     params = (𝒢, ι, ε, periodic, q, dq, τ)
+    # construct it column by column
     for i in 1:length(𝒢.x)
         ι.u[i] = 1.0
         solvePoisson!(ι.u̇, ι.u, params, 0)
@@ -113,4 +114,64 @@ function constructLaplacian(𝒢, periodic, τ)
         ι.u[i] = 0.0
     end
     return L
+end
+
+
+"""
+constructLaplacian(; xmin = 0.0, xmax = 2π, n = 3, k = 3, periodic = false, τ = 1.0, verbose = false)
+
+# Description
+- Constructs the DG Laplacian with uniformly spaced elements and arbitrary polynomial order. The boundary conditions are assumed to be homogeneous and dirichlet. Eventually flags will be put in to impose different boundary conditions, but the only one that can be done now is periodic or homogeneous and dirichlet. It also returns the
+
+# Keyword arguments
+- 'xmin': (number), Leftmost point in the domain
+- 'xmax': (number), Rightmost point in the domain
+- 'n': (integer), Polynomial order
+- 'K': (integer), number of elements
+- 'periodic': boolean, imposes periodic boundary conditions
+- 'τ': (number), penalty parameter
+- 'verbose': (boolean), just states a few things
+
+# Return
+
+- L: (array), matrix form of the Laplacian in weak form
+- M: (array), Technically M^{-1}L is the second derivative, this term is necessary to remove from the second derivative so that the operator is symmetric.
+
+"""
+function constructLaplacian(; xmin = 0.0, xmax = 2π, n = 3, K = 3, periodic = false, τ = 1.0, verbose = false)
+    if verbose
+        println("We have " * string((n+1)*K) * " degrees of freedom")
+        println("The domain is from " * string(xmin) * " to " * string(xmax))
+        println("The value of the penalty parameter is " * string(τ))
+    end
+    # generate mesh variables
+    𝒢 = Mesh(K, n, xmin, xmax)
+
+    L = zeros(length(𝒢.x), length(𝒢.x))
+    ι = Field1D(𝒢)
+    # set external parameters
+    ϰ = 1.0   # diffusivity constant, doesnt actually enter in for now
+    α = 1.0 # 1 is central flux, 0 is upwind, doesnt actually enter in for now
+    ε = external_params(ϰ, α)
+
+    @. ι.u = 0.0
+    q = similar(ι.u)
+    dq = similar(ι.flux)
+
+    params = (𝒢, ι, ε, periodic, q, dq, τ)
+    # construct it column by column
+    for i in 1:length(𝒢.x)
+        ι.u[i] = 1.0
+        solvePoisson!(ι.u̇, ι.u, params, 0)
+        @. L[:,i] = ι.u̇[:]
+        ι.u[i] = 0.0
+    end
+    tmp = zeros(typeof(1.0),(n+1)*K, (n+1)*K)
+    for i in 1:K
+        tmpi = (i-1)*(n+1)+1:i*(n+1)
+        tmp[tmpi,tmpi] .= 𝒢.M
+    end
+    d = Diagonal((1.0 ./ 𝒢.rx[:])')
+    tmp = tmp
+    return L, d*tmp
 end

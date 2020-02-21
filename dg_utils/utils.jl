@@ -199,7 +199,7 @@ end
 lift1D(V, y)
 for computing fluxes
 helps compute a surface integral of a quantity
-note that the parantheses are necessary to prevent too much multiplcation
+note that the parentheses are necessary to prevent too much multiplcation
 the E function takes the surface integrals are presents it
 with respect to the full space inside an element
 the entire operator represents how fluxes flow
@@ -367,21 +367,6 @@ function rk_solver!(rhs!, fields, fluxes, params, dt, Nsteps; auxils = [])
 
     return solutions
 end
-
-"""
-Some nice documentation here.
-# Examples
-```jldoctest
-julia> a = [1 2; 3 4]
-2×2 Array{Int64,2}:
- 1  2
- 3  4
-```
-"""
-function tt(a)
-    return 1
-end
-
 
 """
 rel_error(u,v)

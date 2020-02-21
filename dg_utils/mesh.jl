@@ -435,7 +435,7 @@ struct Mesh{T,S,U,W}
         # build face masks
         fmask1,fmask2 = fmask1D(r)
 
-        # build connectibity maps
+        # build connectivity maps
         vmapM,vmapP,vmapB,mapB, mapI,mapO,vmapI,vmapO = buildmaps1D(K, nGL,nFP,nFaces, fmask1, EtoE,EtoF, x)
 
         # build differentiation matrix
