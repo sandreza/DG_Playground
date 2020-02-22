@@ -2,6 +2,8 @@ include("utils.jl")
 
 using SparseArrays # for connectivity matrix
 
+abstract type AbstractMesh end
+
 """
 gridvalues1D(xmin, xmax, K)
 
@@ -356,7 +358,7 @@ function make_periodic1D!(vmapP, u)
     return nothing
 end
 
-struct Mesh{T,S,U,W}
+struct Mesh{T,S,U,W} <: AbstractMesh
     # inputs
     K::S
     n::S
