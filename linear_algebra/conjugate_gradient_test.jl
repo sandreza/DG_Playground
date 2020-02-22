@@ -1,3 +1,5 @@
+using Plots
+
 include("conjugate_gradient.jl")
 
 
@@ -31,7 +33,7 @@ include("../dg_utils/mesh.jl")
 include("../dg_utils/field.jl")
 # set polynomial order and number of elements
 n = 3
-K = 3
+K = 8
 
 # set domain parameters
 L    = 2π
@@ -50,7 +52,7 @@ println(norm(∇² - ∇²', Inf))
 s∇² = sparse(∇²)
 solution = @. sin(x[:])
 b = s∇² * solution
-γ = 00.0
+γ = 10.0
 s∇² -= γ * M # for helmholtz
 ∇²_tmp(x) = s∇² * x
 solution = s∇² \ b
@@ -107,6 +109,7 @@ for i in eachindex(x⁰)
 end
 prec = Tridiagonal(prec)
 lu_prec = lu(prec)
+#P_tmp(x) = inv(M) * (lu_prec \ (inv(M)*x))
 P_tmp(x) = lu_prec \ x
 r = conjugate_gradient!(∇²_tmp, x⁰, b, track_residual = true, P = P_tmp)
 println("The relative error is")
@@ -136,7 +139,7 @@ scatter(log.(r)/log(10), ylabel = "log10 residual norm", xlabel = "iterations", 
 # Preconditioned Laplacian, Discrete Tridiagonal inverse Laplacian (-1 2 -1) with Δx
 x⁰ = randn(length(solution))
 prec = zeros(length(x⁰), length(x⁰))
-Δx = x[2:end] - x[1:end-1]
+Δx = 𝒢.x[2:end] - 𝒢.x[1:end-1]
 Δx = @. Δx * Δx
 for i in eachindex(Δx)
     if Δx[i] == 0
@@ -160,7 +163,7 @@ end
 prec = Tridiagonal(prec)
 lu_prec = lu(prec)
 P_tmp(x) = lu_prec \ x
-
+# P_tmp(x) = inv(M) * (lu_prec \ (inv(M)*x))
 r = conjugate_gradient!(∇²_tmp, x⁰, b, track_residual = true, P = P_tmp)
 println("The relative error is")
 println(norm(x⁰-solution)/norm(solution))
@@ -217,16 +220,9 @@ println("The relative error is")
 println(norm(x⁰-solution)/norm(solution))
 scatter(log.(r)/log(10), ylabel = "log10 residual norm", xlabel = "iterations", title = "Laplacian with Bad Preconditioner ")
 
-
-###
-# target time
-chol_s∇² = cholesky(-s∇²)
-@btime chol_s∇² \ b
-@btime s∇² * b
-
 ###
 s∇² = sparse(∇²)
-solution = @. sin(x[:])
+solution = @. sin(𝒢.x[:])
 b = s∇² * solution
 γ = 10.0
 s∇² -= γ * M # for helmholtz
@@ -305,24 +301,46 @@ x = P * (𝒢.x[:])
 prec = zeros(length(x), length(x))
 Δx = x[2:end] - x[1:end-1]
 Δx = Δx .* Δx
-for i in eachindex(px⁰)
-    if (i < length(px⁰)) && (i >1)
+for i in eachindex(x)
+    if (i < length(x)) && (i >1)
+        prec[i,i] = -1/Δx[i] - 1/Δx[i-1]
+    elseif i==1
+        prec[i,i] = -1/Δx[i] - 1/Δx[i]
+    else
+        prec[i,i] = -1/ Δx[i-1] - 1/Δx[i-1]
+    end
+    if i < length(x)
+        prec[i+1,i] = 1 / Δx[i]
+        prec[i,i+1] = prec[i+1,i]
+    end
+end
+
+iprec = P' * inv(prec) * P - γ * M
+P_tmp(x) = iprec * x
+
+r = conjugate_gradient!(∇²_tmp, x⁰, b, track_residual = true, P = P_tmp)
+println("The relative error is")
+println(norm(x⁰-solution)/norm(solution))
+scatter(log.(r)/log(10), ylabel = "log10 residual norm", xlabel = "iterations", title = "Laplacian with semi-definite Preconditioner ")
+
+
+###
+
+# Preconditioned Laplacian, Discrete Tridiagonal inverse Laplacian (-1 2 -1) with Δx
+x⁰ = randn(length(solution))
+prec = zeros(length(x⁰), length(x⁰))
+Δx = 𝒢.x[2:end] - 𝒢.x[1:end-1]
+Δx = @. Δx * Δx
+for i in eachindex(x⁰)
+    if (i < length(x⁰)) && (i >1)
         prec[i,i] = -1/Δx[i] - 1/Δx[i-1] - γ
     elseif i==1
         prec[i,i] = -1/Δx[i] - 1/Δx[i] - γ
     else
         prec[i,i] = -1/ Δx[i-1] - 1/Δx[i-1] - γ
     end
-    if i < length(px⁰)
+    if i < length(x⁰)
         prec[i+1,i] = 1 / Δx[i]
         prec[i,i+1] = prec[i+1,i]
     end
 end
-
-iprec = P' * inv(prec) * P
-P_tmp(x) = iprec * x
-
-r = conjugate_gradient!(∇²_tmp, x⁰, b, track_residual = true, P = P_tmp)
-println("The relative error is")
-println(norm(x⁰-solution)/norm(solution))
-scatter(log.(r)/log(10), ylabel = "log10 residual norm", xlabel = "iterations", title = "Laplacian with Bad Preconditioner ")
