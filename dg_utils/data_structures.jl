@@ -7,11 +7,12 @@ abstract type AbstractGradient end
 abstract type AbstractField end
 abstract type AbstractFluxMethod end
 
-abstract type Central <: AbstractFluxMethod end
 
 struct Gradient{𝒮} <: AbstractGradient
     grid::𝒮
 end
+
+struct Central <: AbstractFlux end
 
 struct Flux{𝒯, 𝒮} <:  AbstractFlux
     method::𝒯
@@ -23,12 +24,15 @@ struct Field{𝒯} <: AbstractField
 end
 
 function ⋅(∇::AbstractGradient, Φ::AbstractFlux)
+    # println("abstract")
     q = ∇.grid.D * Φ.field
     @. q *= ∇.grid.rx
     return q
 end
 
+
 function ⋅(∇::AbstractGradient, Φ::Flux{Central, 𝒮}) where 𝒮
+    # println("central")
     q = ∇.grid.D * Φ.field
     @. q *= ∇.grid.rx
     return q
