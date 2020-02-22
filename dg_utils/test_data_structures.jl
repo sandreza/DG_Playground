@@ -4,8 +4,8 @@ include("mesh.jl")
 using Plots
 
 # Mesh Stuff
-K = 8
-n = 3
+K = 16
+n = 2
 xmin = 0.0
 xmax = 2π
 𝒢 = Mesh(K, n, xmin, xmax)
@@ -35,24 +35,20 @@ plot!(𝒢.x, flux_divergence, legend = false, linewidth = 3)
 
 ###
 using DifferentialEquations
-# Define time-stepping functions
-
-function advective_flux(c, u, field_bc, flux_type)
-    flux_field = Field(c .* u, field_bc)
-    Φ = Flux(flux_type, flux_field)
-    return Φ
-end
+# Define time-stepping functions, this could be done better
 
 # Evolve Forward in time
 function solveAdvection!(u̇, u, params, t)
     # unpack params
-    ∇ = params[1]         # Gradient operator
-    flux_type = params[2] # what flux to use
-    field_bc = params[3]  # what boundary conditions
-    c = params[4]         # wavespeed
-    Φ = advective_flux(c, u, field_bc, flux_type) # calculate flux
-    tmp = -1.0 .* ( ∇⋅Φ )# calculate tendency
-    u̇ .= tmp
+    ∇ = params[1]           # Gradient operator
+    flux_type = params[2]   # what flux to use
+    field_bc = params[3]    # what boundary conditions
+    c = params[4]           # wavespeed
+    Φ = params[5]           # flux term
+    @. Φ.field.data = c * u # flux calculation
+    @. Φ.method.v = c       # set wavespeed
+    tmp =  ∇⋅Φ              # calculate tendency
+    u̇ .= -tmp               # store it
     return nothing
 end
 
@@ -69,8 +65,18 @@ dt *= 0.5 / 1
 # Initial condition
 u = @. exp(-4 * (𝒢.x - (xmax-xmin)/2)^2)
 
+# Redefine Data and Flux
+# Field
+field_data = sin.(𝒢.x)
+field_bc = Periodic()
+flux_type = Central()
+flux_type  = Slider(0.0, [c]) #1.0 is central, 0.0 is upwind
+#flux_field = Field(field_data, field_bc)
+# Flux
+Φ = Flux(flux_type, flux_field)
+
 tspan  = (0.0, 2.0)
-params = (∇, flux_type, field_bc, c)
+params = (∇, flux_type, field_bc, c, Φ)
 rhs! = solveAdvection!
 
 prob = ODEProblem(rhs!, u, tspan, params);

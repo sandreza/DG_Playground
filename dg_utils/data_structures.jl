@@ -27,10 +27,14 @@ end
 
 # Structs for dispatch
 # Fluxes
+struct NeglectFlux  <: AbstractFluxMethod end
 struct Central <: AbstractFluxMethod end
-struct NoFlux  <: AbstractFluxMethod end
 struct Rusonov <: AbstractFluxMethod end
 struct Upwind  <: AbstractFluxMethod end
+struct Slider{𝒯, 𝒮} <: AbstractFluxMethod
+    α::𝒯
+    v::𝒮
+end
 
 
 # Boundary Conditions
@@ -45,6 +49,7 @@ struct Neumann{𝒯} <: AbstractBoundaryCondition
 end
 
 struct Periodic <: AbstractBoundaryCondition end
+struct NoFlux   <: AbstractBoundaryCondition end
 
 # Helper functions
 function build(∇::AbstractGradient, bc::AbstractBoundaryCondition, Φ::AbstractFluxMethod; mass_matrix = false)
@@ -74,8 +79,23 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::Field, a::Periodic, metho
     diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] - uin) / 2
     diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] - uout) / 2
     # Compute Lift Operator
-    lift = - 𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lift
+    lifted = - 𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
+    return lifted
+end
+
+function compute_surface_terms(𝒢::AbstractMesh, Φ::Field, a::Periodic, method::Slider{𝒯, 𝒮}) where 𝒯 where 𝒮
+    # compute fluxes at interface
+    diffs = reshape( (Φ.data[𝒢.vmapM] - Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
+    # Handle Periodic Boundaries
+    uin  = Φ.data[𝒢.vmapO]
+    uout = Φ.data[𝒢.vmapI]
+    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] - uin)
+    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] - uout)
+    # Adds extra part
+    @. diffs = -1//2 * diffs * (𝒢.normals - (1 - method.α) * abs(method.v * 𝒢.normals)/method.v)
+    # Compute Lift Operator
+    lifted =  𝒢.lift * (𝒢.fscale .* diffs)
+    return lifted
 end
 
 # Binary Operators
