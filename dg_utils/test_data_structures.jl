@@ -1,7 +1,7 @@
 include("data_structures.jl")
 include("utils.jl")
 include("mesh.jl")
-using Plots
+#using Plots
 K = 8
 n = 3
 xmin = 0.0
@@ -16,5 +16,5 @@ flux_field = 𝒢.x .* 𝒢.x
 
 g = ∇⋅Φ
 
-theme(:juno)
-scatter(𝒢.x[:], g[:], xlims = (xmin, xmax), ylims = (minimum(g), maximum(g)) )
+#theme(:juno)
+#scatter(𝒢.x[:], g[:], xlims = (xmin, xmax), ylims = (minimum(g), maximum(g)) )
