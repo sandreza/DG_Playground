@@ -2,6 +2,7 @@
 function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::AbstractBoundaryCondition, state::AbstractArray, method::NeglectFlux, calculate::Function)
     return 𝒢.lift * zeros((𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
 end
+
 ################################
 # Periodic Boundary Conditions #
 ################################

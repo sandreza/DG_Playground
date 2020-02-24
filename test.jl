@@ -42,3 +42,36 @@ tmp4 = ∇⋅Φ
 p4 = plot(𝒢.x, tmp4, legend = false, title = " DG derivative Rusonov")
 
 plot(p1,p2,p3,p4)
+
+
+####
+α = 1.0 # Rusanov prameter
+flux_type = Rusanov(c)
+field_bc = Periodic()
+field_data = copy(u)
+flux_field = Field(field_data, field_bc)
+state = copy(u)
+Φ = Flux(flux_type, flux_field, state, calculate_hyperbolic_flux)
+
+# Define Diffusive flux
+α = 1.0 # Rusanov prameter
+flux_type = Rusanov(c)
+field_bc = Periodic()
+field_data = copy(u)
+flux_field = Field(field_data, field_bc)
+state = copy(u)
+∇Φ = Flux(flux_type, flux_field, state, calculate_parabolic_flux)
+params = (∇, Φ, ∇ᴰ, ∇Φ)
+# unpack params
+∇ = params[1]           # Gradient operator
+Φ = params[2]           # flux term
+∇ᴰ = params[3]          # Gradient operator
+∇Φ = params[4]          # Diffusive state
+∇Φ.state .= u           # update state
+q = ∇ᴰ⋅Φ                # calculate gradient
+Φ.state .= q            # store gradient
+tmp =  ∇⋅Φ              # calculate (negative) tendency
+###
+plot(𝒢.x, u)
+plot(𝒢.x, q)
+plot(𝒢.x, tmp)

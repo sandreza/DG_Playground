@@ -16,8 +16,8 @@ xmax = 2π  # right endpoint of domain
 u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
 # Define Flux
-α = c # Rusanov prameter
-flux_type = Rusanov(0.0)
+α = 0.0 # Rusanov prameter
+flux_type = Rusanov(c)
 field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
@@ -46,9 +46,9 @@ pushfirst!(indices, 1)
 push!(indices, nt)
 for i in indices
     plt = plot(𝒢.x, sol.u[i], xlims=(xmin, xmax), ylims = (-0.1,1.1), marker = 3,    leg = false)
-    plot!(𝒢.x, sol.u[1], xlims = (xmin, xmax), ylims = (-0.1,1.1), color = "red", leg = false)
+    plot!(𝒢.x, sol.u[1], xlims = (xmin, xmax), ylims = (-0.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     display(plt)
-    #sleep(0.25)
+    # sleep(0.25)
 end
 
 relative_error = norm(sol.u[1] .- sol.u[end]) ./ norm(sol.u[end])
