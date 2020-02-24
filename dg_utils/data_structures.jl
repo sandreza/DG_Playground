@@ -32,7 +32,7 @@ struct NeglectFlux  <: AbstractFluxMethod end
 struct Central <: AbstractFluxMethod end
 struct Upwind  <: AbstractFluxMethod end
 
-struct Rusonov{𝒯} <: AbstractFluxMethod
+struct Rusanov{𝒯} <: AbstractFluxMethod
     α::𝒯
 end
 
@@ -45,6 +45,14 @@ end
 struct Dirichlet{𝒯} <: AbstractBoundaryCondition
     left::𝒯
     right::𝒯
+end
+
+struct Inflow{𝒯} <: AbstractBoundaryCondition
+    left::𝒯
+end
+
+struct Outflow{𝒯} <: AbstractBoundaryCondition
+    left::𝒯
 end
 
 struct Neumann{𝒯} <: AbstractBoundaryCondition
@@ -106,7 +114,7 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Abstrac
     return 𝒢.lift * zeros((𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
 end
 
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Rusonov{𝒯}) where 𝒯
+function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Rusanov{𝒯}) where 𝒯
     # first compute numerical fluxes at interface
     diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
     # Handle Periodic Boundaries
@@ -127,7 +135,6 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodi
     @. diffs[:] -= Φ.data[𝒢.vmapM]
     # Compute Lift Operator
     lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    
     return lifted
 end
 

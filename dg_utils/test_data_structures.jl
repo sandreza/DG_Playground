@@ -4,10 +4,10 @@ include("mesh.jl")
 using Plots
 
 # Mesh Stuff
-K = 16
-n = 2
-xmin = 0.0
-xmax = 2π
+K = 16 # Number of elements
+n = 2  # Polynomial Order
+xmin = 0.0 # left endpoint of domain
+xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax)
 
 # Operator
@@ -22,7 +22,6 @@ flux_type  = Central()
 flux_field = Field(field_data, field_bc)
 # Flux
 Φ = Flux(flux_type, flux_field, field_data)
-
 
 # Compute Gradient
 flux_divergence = ∇⋅Φ
@@ -68,7 +67,7 @@ field_data = sin.(𝒢.x)
 field_bc = Periodic()
 flux_type = Central()
 flux_type  = Slider(0.0, [c]) #1.0 is central, 0.0 is upwind
-flux_type = Rusonov(0.0)
+flux_type = Rusanov(0.0)
 flux_field = Field(field_data, field_bc)
 # Flux and state
 v = copy(u)
