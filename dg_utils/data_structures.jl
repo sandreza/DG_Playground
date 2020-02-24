@@ -15,9 +15,10 @@ struct Gradient{𝒮} <: AbstractGradient
     grid::𝒮
 end
 
-struct Flux{𝒯, 𝒮} <:  AbstractFlux
+struct Flux{𝒯, 𝒮, 𝒱} <:  AbstractFlux
     method::𝒯
     field::𝒮
+    state::𝒱
 end
 
 struct Field{𝒯, 𝒮} <: AbstractField
@@ -29,13 +30,16 @@ end
 # Fluxes
 struct NeglectFlux  <: AbstractFluxMethod end
 struct Central <: AbstractFluxMethod end
-struct Rusonov <: AbstractFluxMethod end
 struct Upwind  <: AbstractFluxMethod end
+
+struct Rusonov{𝒯} <: AbstractFluxMethod
+    α::𝒯
+end
+
 struct Slider{𝒯, 𝒮} <: AbstractFluxMethod
     α::𝒯
     v::𝒮
 end
-
 
 # Boundary Conditions
 struct Dirichlet{𝒯} <: AbstractBoundaryCondition
@@ -53,7 +57,7 @@ struct NoFlux   <: AbstractBoundaryCondition end
 
 # Helper functions
 function build(∇::AbstractGradient, bc::AbstractBoundaryCondition, Φ::AbstractFluxMethod; mass_matrix = false)
-    #TODO
+    #TODO build the operator in sparse representation
     return nothing
 end
 
@@ -63,13 +67,13 @@ function compute_volume_terms(∇::AbstractArray, Φ::AbstractArray, volume_size
     return q
 end
 
-function compute_volume_terms(∇::AbstractArray, Φ::Field, volume_size::AbstractArray)
+function compute_volume_terms(∇::AbstractArray, Φ::AbstractField, volume_size::AbstractArray)
     q = ∇ * Φ.data
     @. q *= volume_size
     return q
 end
 
-function compute_surface_terms(𝒢::AbstractMesh, Φ::Field, a::Periodic, method::Central)
+function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Central)
     # compute fluxes at interface
     diffs = reshape( (Φ.data[𝒢.vmapM] - Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
     @. diffs *= 1.0 / 2.0
@@ -83,7 +87,7 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::Field, a::Periodic, metho
     return lifted
 end
 
-function compute_surface_terms(𝒢::AbstractMesh, Φ::Field, a::Periodic, method::Slider{𝒯, 𝒮}) where 𝒯 where 𝒮
+function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Slider{𝒯, 𝒮}) where 𝒯 where 𝒮
     # compute fluxes at interface
     diffs = reshape( (Φ.data[𝒢.vmapM] - Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
     # Handle Periodic Boundaries
@@ -98,6 +102,35 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::Field, a::Periodic, metho
     return lifted
 end
 
+function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::AbstractBoundaryCondition, state::AbstractArray, method::NeglectFlux)
+    return 𝒢.lift * zeros((𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
+end
+
+function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Rusonov{𝒯}) where 𝒯
+    # first compute numerical fluxes at interface
+    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
+    # Handle Periodic Boundaries
+    uin  = Φ.data[𝒢.vmapO]
+    uout = Φ.data[𝒢.vmapI]
+    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
+    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
+    # Central Flux
+    @. diffs *= 1.0 / 2.0
+    # Extra dissipation for Rusonov
+    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
+    # Handle boundary again
+    uin  = state[𝒢.vmapO]
+    uout = state[𝒢.vmapI]
+    diffs[𝒢.mapI]  +=  @. method.α * 𝒢.normals[𝒢.mapI] * ( state[𝒢.vmapI] - uin) / 2.0
+    diffs[𝒢.mapO]  +=  @. method.α * 𝒢.normals[𝒢.mapO] * ( state[𝒢.vmapO] - uout ) / 2.0
+    # Now create jump in flux, (Strong-Weak form)
+    @. diffs[:] -= Φ.data[𝒢.vmapM]
+    # Compute Lift Operator
+    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
+    
+    return lifted
+end
+
 # Binary Operators
 function ⋅(∇::AbstractGradient, Φ::AbstractFlux)
     # println("abstract")
@@ -107,9 +140,9 @@ function ⋅(∇::AbstractGradient, Φ::AbstractFlux)
 end
 
 
-function ⋅(∇::AbstractGradient, Φ::Flux{𝒯, 𝒮}) where 𝒯 where 𝒮
+function ⋅(∇::AbstractGradient, Φ::Flux{𝒯, 𝒮, 𝒱}) where 𝒯 where 𝒮 where 𝒱
     # println("central")
     V = compute_volume_terms(∇.grid.D, Φ.field, ∇.grid.rx)
-    S = compute_surface_terms(∇.grid, Φ.field, Φ.field.bc, Φ.method)
+    S = compute_surface_terms(∇.grid, Φ.field, Φ.field.bc, Φ.state, Φ.method)
     return V .+ S
 end

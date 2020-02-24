@@ -21,7 +21,7 @@ field_bc = Periodic()
 flux_type  = Central()
 flux_field = Field(field_data, field_bc)
 # Flux
-Φ = Flux(flux_type, flux_field)
+Φ = Flux(flux_type, flux_field, field_data)
 
 
 # Compute Gradient
@@ -41,25 +41,22 @@ using DifferentialEquations
 function solveAdvection!(u̇, u, params, t)
     # unpack params
     ∇ = params[1]           # Gradient operator
-    flux_type = params[2]   # what flux to use
-    field_bc = params[3]    # what boundary conditions
-    c = params[4]           # wavespeed
-    Φ = params[5]           # flux term
-    @. Φ.field.data = c * u # flux calculation
-    @. Φ.method.v = c       # set wavespeed
-    tmp =  ∇⋅Φ              # calculate tendency
-    u̇ .= -tmp               # store it
+    Φ = params[2]           # flux term
+    update_flux!(Φ, u)      # use update rule
+    tmp =  ∇⋅Φ              # calculate (negative) tendency
+    @. u̇ = -tmp             # correct and store it
     return nothing
 end
 
 # Define time-stepping parameters
 
-c = 2π # speed of wave
+const c = 2π # speed of wave
 
 # Determine timestep
 Δx  = minimum(𝒢.x[2,:] -𝒢.x[1,:])
 CFL = 0.75
-dt  = CFL * Δx / c
+α = 10.0 #Rusonov Flux Parameters
+dt  = CFL * Δx / maximum([α, c])
 dt *= 0.5 / 1
 
 # Initial condition
@@ -71,12 +68,23 @@ field_data = sin.(𝒢.x)
 field_bc = Periodic()
 flux_type = Central()
 flux_type  = Slider(0.0, [c]) #1.0 is central, 0.0 is upwind
-#flux_field = Field(field_data, field_bc)
-# Flux
-Φ = Flux(flux_type, flux_field)
+flux_type = Rusonov(0.0)
+flux_field = Field(field_data, field_bc)
+# Flux and state
+v = copy(u)
+Φ = Flux(flux_type, flux_field, v)
+# Define rule for updating flux
+function update_flux!(flux::AbstractFlux, u::AbstractArray)
+    @. flux.field.data = c * u # flux calculation
+    @. flux.state = u          # update state
+    return nothing
+end
+
+update_flux!(Φ, u)
+
 
 tspan  = (0.0, 2.0)
-params = (∇, flux_type, field_bc, c, Φ)
+params = (∇, Φ)
 rhs! = solveAdvection!
 
 prob = ODEProblem(rhs!, u, tspan, params);
@@ -91,10 +99,12 @@ num = floor(Int, nt/step)
 indices = step * collect(1:num)
 pushfirst!(indices, 1)
 push!(indices, nt)
-
+#anim = @animate
 for i in indices
     plt = plot(𝒢.x, sol.u[i], xlims=(xmin, xmax), ylims = (-0.1,1.1), marker = 3,    leg = false)
     plot!(𝒢.x, sol.u[1], xlims = (xmin, xmax), ylims = (-0.1,1.1), color = "red", leg = false)
     display(plt)
-    sleep(0.25)
+    #sleep(0.25)
 end
+
+# display(anim)
