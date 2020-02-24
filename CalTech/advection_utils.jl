@@ -1,8 +1,15 @@
+include("../dg_utils/data_structures.jl")
 # Define Flux Calculation
-function update_flux!(flux::AbstractFlux, u::AbstractArray)
-    @. flux.field.data = c * u # flux calculation
-    @. flux.state = u          # update state
-    return nothing
+
+# Define wavespeed
+const c = 2π   # speed of wave
+
+function calculate_flux(x::AbstractArray)
+    return c .* x
+end
+
+function calculate_flux(x::Number)
+    return c * x
 end
 
 # Define right hand side of the differential equation
@@ -10,7 +17,7 @@ function advection!(u̇, u, params, t)
     # unpack params
     ∇ = params[1]           # Gradient operator
     Φ = params[2]           # flux term
-    update_flux!(Φ, u)      # use update rule
+    Φ.state .= u            # use update state
     tmp =  ∇⋅Φ              # calculate (negative) tendency
     @. u̇ = -tmp             # correct and store it
     return nothing

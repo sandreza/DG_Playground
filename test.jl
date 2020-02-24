@@ -7,14 +7,14 @@ a = randn(3)
 println(a)
 b=test_struct(a)
 ###
-
-solveAdvection!(v, u, params, 0.0)
+v = copy(u)
+advection!(v, u, params, 0.0)
 @. u += v * dt
-solveAdvection!(v, u, params, 0.0)
+advection!(v, u, params, 0.0)
 @. u += v * dt
-solveAdvection!(v, u, params, 0.0)
+advection!(v, u, params, 0.0)
 @. u += v * dt
-solveAdvection!(v, u, params, 0.0)
+advection!(v, u, params, 0.0)
 @. u += v * dt
 
 

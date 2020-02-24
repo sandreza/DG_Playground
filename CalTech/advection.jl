@@ -1,4 +1,4 @@
-include("../dg_utils/data_structures.jl")
+#include("../dg_utils/data_structures.jl")
 include("../dg_utils/utils.jl")
 include("../dg_utils/mesh.jl")
 include("advection_utils.jl")
@@ -6,23 +6,25 @@ using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
 K = 16     # Number of elements
-n = 2      # Polynomial Order
+n = 1      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
 ∇ = Gradient(𝒢)
 
-# Define Initial Condition and flux type
+# Define Initial Condition
 u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
-α = 0.0 # Rusanov prameter
-flux_type = Rusanov(α)
+
+# Define Flux
+α = c # Rusanov prameter
+flux_type = Rusanov(0.0)
 field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
-Φ = Flux(flux_type, flux_field, state)
+flux_calculate = calculate_flux
+Φ = Flux(flux_type, flux_field, state, flux_calculate)
 # Define Advection parameters
-const c = 2π   # speed of wave
 dt = cfl(𝒢, c, α = α) # CFL timestep
 tspan  = (0.0, 2.0)
 params = (∇, Φ)
