@@ -34,6 +34,7 @@ end
 struct NeglectFlux  <: AbstractFluxMethod end
 struct Central <: AbstractFluxMethod end
 struct Upwind  <: AbstractFluxMethod end
+struct FreeFlux <: AbstractFluxMethod end
 
 struct Rusanov{𝒯} <: AbstractFluxMethod
     α::𝒯

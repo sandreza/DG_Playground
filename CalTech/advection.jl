@@ -6,7 +6,7 @@ using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
 K = 16     # Number of elements
-n = 1      # Polynomial Order
+n = 2      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
@@ -17,7 +17,7 @@ u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
 # Define Flux
 α = 0.0 # Rusanov prameter
-flux_type = Rusanov(c)
+flux_type = Rusanov(α)
 field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
