@@ -58,7 +58,7 @@ function solvePoisson!(u̇, u, params, t)
         ι.flux[𝒢.mapO]  =  @. (u[𝒢.vmapO] - uout) / 2
     end
 
-    # rhs of the semi-discerte PDE, ∂ᵗu = ∂ˣq, ∂ˣq  = u
+    # rhs of the semi-discrete PDE, ∂ᵗu = ∂ˣq, ∂ˣu  = q
     #first solve for q
     mul!(q, 𝒢.D, u)
     @. q *= 𝒢.rx

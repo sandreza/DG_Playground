@@ -1,7 +1,7 @@
 include("../dg_utils/data_structures.jl")
-include("../dg_utils/utils.jl")
 include("../dg_utils/mesh.jl")
-include("advection_utils.jl")
+include("diffusion_utils.jl")
+
 using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
@@ -10,25 +10,35 @@ n = 1      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
-∇ = Gradient(𝒢) # define gradient object
+∇ = Gradient(𝒢)
+∇ᴰ = Gradient(𝒢)
 
 # Define Initial Condition
 u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
-# Define Flux
+# Define hyperbolic flux
 α = 0.0 # Rusanov prameter
-flux_type = Rusanov(c)
+flux_type = Central()
 field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
-flux_calculate = calculate_flux
-Φ = Flux(flux_type, flux_field, state, flux_calculate)
-# Define Advection parameters
-dt = cfl(𝒢, c, α = α) # CFL timestep
-tspan  = (0.0, 2.0)
-params = (∇, Φ)
-rhs! = advection!
+Φ = Flux(flux_type, flux_field, state, calculate_hyperbolic_flux)
+
+# Define Diffusive flux
+α = 0.0 # Rusanov prameter
+flux_type = Central()
+field_bc = Periodic()
+field_data = copy(u)
+flux_field = Field(field_data, field_bc)
+state = copy(u)
+∇Φ = Flux(flux_type, flux_field, state, calculate_parabolic_flux)
+
+# Define Diffusion parameters
+dt = cfl_diffusive(𝒢, 1.0) # CFL timestep
+tspan  = (0.0, 5.0)
+params = (∇, Φ, ∇ᴰ, ∇Φ)
+rhs! = diffusion!
 
 # Define ODE problem
 prob = ODEProblem(rhs!, u, tspan, params);
@@ -50,7 +60,3 @@ for i in indices
     display(plt)
     # sleep(0.25)
 end
-
-relative_error = norm(sol.u[1] .- sol.u[end]) ./ norm(sol.u[end])
-relative_error_string = @sprintf("%.1e", relative_error)
-println("The relative error is " * relative_error_string)
