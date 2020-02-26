@@ -53,7 +53,7 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodi
     uout = state[𝒢.vmapI]
     diffs[𝒢.mapI]  +=  @. method.α * 𝒢.normals[𝒢.mapI] * ( state[𝒢.vmapI] - uin) / 2.0
     diffs[𝒢.mapO]  +=  @. method.α * 𝒢.normals[𝒢.mapO] * ( state[𝒢.vmapO] - uout ) / 2.0
-    # Now create jump in flux, (Strong-Weak form)
+    # Now create jump in flux, (Weak-Strong form)
     @. diffs[:] -= Φ.data[𝒢.vmapM]
     # Compute Lift Operator
     lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
@@ -79,7 +79,7 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Inflow
     # Extra dissipation for Rusonov
     @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
 
-    # Now create jump in flux, (Strong-Weak form)
+    # Now create jump in flux, (Weak-Strong form)
     @. diffs[:] -= Φ.data[𝒢.vmapM]
     # Compute Lift Operator
     lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
@@ -130,7 +130,7 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Dirich
     # Extra dissipation for Rusonov
     @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
 
-    # Now create jump in flux, (Strong-Weak form)
+    # Now create jump in flux, (Weak-Strong form)
     @. diffs[:] -= Φ.data[𝒢.vmapM]
     # Compute Lift Operator
     lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
@@ -155,7 +155,7 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::FreeFl
     # Extra dissipation for Rusonov
     @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
 
-    # Now create jump in flux, (Strong-Weak form)
+    # Now create jump in flux, (Weak-Strong form)
     @. diffs[:] -= Φ.data[𝒢.vmapM]
     # Compute Lift Operator
     lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)

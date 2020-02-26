@@ -6,7 +6,7 @@ using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
 K = 16     # Number of elements
-n = 3      # Polynomial Order
+n = 2      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh

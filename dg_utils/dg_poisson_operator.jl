@@ -1,5 +1,5 @@
 # poisson solver functions in a Field1D framework
-
+include("field.jl")
 
 """
 solvePoisson!(u̇, u, params, t)

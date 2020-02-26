@@ -34,7 +34,6 @@ end
 struct NeglectFlux  <: AbstractFluxMethod end
 struct Central <: AbstractFluxMethod end
 struct Upwind  <: AbstractFluxMethod end
-struct FreeFlux <: AbstractFluxMethod end
 
 struct Rusanov{𝒯} <: AbstractFluxMethod
     α::𝒯
@@ -66,11 +65,32 @@ end
 
 struct Periodic <: AbstractBoundaryCondition end
 struct NoFlux   <: AbstractBoundaryCondition end
+struct FreeFlux <: AbstractBoundaryCondition end
 
 # Helper functions
-function build(∇::AbstractGradient, bc::AbstractBoundaryCondition, Φ::AbstractFluxMethod; mass_matrix = false)
-    #TODO build the operator in sparse representation
-    return nothing
+function build(∇::AbstractGradient, bc::AbstractBoundaryCondition, flux_type::AbstractFluxMethod, state::AbstractArray; mass_matrix = false)
+    eⁿ = zeros(length(state))
+    A = eⁿ * eⁿ'
+    field_data = copy(state)
+    flux_field = Field(field_data, bc)
+    state = copy(u)
+    Φ = Flux(flux_type, flux_field, state, x->x)
+    for i in eachindex(u)
+        eⁿ[i] = 1.0
+        state[:] .=
+        Φ.field.data[:] .= eⁿ
+        Φ.state[:] .= eⁿ
+        tmp = ∇⋅Φ
+        eⁿ[i] = 0.0
+        if mass_matrix
+            tmp =  𝒢.M * tmp
+            @. tmp /= 𝒢.rx
+            @. A[:,i] = tmp[:]
+        else
+            @. A[:,i] = tmp[:]
+        end
+    end
+    return A
 end
 
 # Binary Operators

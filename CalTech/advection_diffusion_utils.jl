@@ -1,6 +1,6 @@
 include("../dg_utils/data_structures.jl")
 const c = 2π
-const κ = 1.0
+const κ = 0.4
 
 function calculate_hyperbolic_flux(x::AbstractArray)
     return κ .* x
