@@ -113,6 +113,20 @@ function ⋅(∇::AbstractGradient, Φ::Flux{𝒯, 𝒮, 𝒱, 𝒰}) where {�
     return V .+ S
 end
 
+# (same in 1D)
+function ⊗(∇::AbstractGradient, Φ::Flux{𝒯, 𝒮, 𝒱, 𝒰}) where {𝒯, 𝒮, 𝒱, 𝒰}
+    # calculate flux
+    tmp = Φ.calculate(Φ.state)
+    Φ.field.data .= tmp
+
+    # volume terms
+    V = compute_volume_terms(∇.grid.D, Φ.field, ∇.grid.rx)
+
+    # surface terms
+    S = compute_surface_terms(∇.grid, Φ.field, Φ.field.bc, Φ.state, Φ.method, Φ.calculate)
+    return V .+ S
+end
+
 
 function compute_volume_terms(∇::AbstractArray, Φ::AbstractArray, volume_size::AbstractArray)
     q = ∇ * Φ

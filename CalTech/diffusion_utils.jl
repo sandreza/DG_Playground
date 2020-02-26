@@ -23,7 +23,7 @@ function diffusion!(u̇, u, params, t)
     Φ = params[2]           # flux term
     ∇Φ = params[3]          # diffusive state
     Φ.state .= u            # update state
-    q = ∇⋅Φ                 # calculate gradient
+    q = ∇⊗Φ                 # calculate gradient
     ∇Φ.state .= q           # store gradient
     tmp =  ∇⋅∇Φ             # calculate tendency
     @. u̇ = tmp              # store it
