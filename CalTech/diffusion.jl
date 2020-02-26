@@ -18,7 +18,8 @@ u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 # Define hyperbolic flux
 α = 0.0 # Rusanov prameter
 flux_type = Rusanov(α)
-field_bc = Dirichlet(0.0, 1.0)
+#field_bc = Dirichlet(0.0, 1.0)
+field_bc = FreeFlux()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -27,7 +28,8 @@ state = copy(u)
 # Define Diffusive flux
 α = 0.0 # Rusanov parameter
 flux_type = Rusanov(α)
-field_bc = FreeFlux()
+#field_bc = FreeFlux()
+field_bc = Dirichlet(0.0, 1.0)
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)

@@ -94,7 +94,7 @@ end
 function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Outflow{𝒮}, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
     # first compute numerical fluxes at interface
     diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
+    # Handle Outflow Boundary Condition
     uin  =  Φ.data[𝒢.vmapI]
     uout = -Φ.data[𝒢.vmapO] + 2 .* calculate(bc.out)
     diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)

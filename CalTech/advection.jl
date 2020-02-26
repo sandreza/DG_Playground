@@ -18,7 +18,7 @@ u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 # Define Flux
 α = 0.0 # Rusanov prameter
 flux_type = Rusanov(α)
-field_bc = Periodic()
+field_bc = Inflow(0.5)
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)

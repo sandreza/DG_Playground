@@ -28,7 +28,7 @@ struct Banana{𝒯, 𝒮, 𝒰, 𝒱} <: AbstractFruit
 end
 
 # A tuple of fruits
-struct Fruple{N} <: AbstractFruitCombo where N <: Int
+struct Fruple{N} <: AbstractFruitCombo
     fruits::NTuple{N,AbstractFruit}
 end
 
@@ -36,20 +36,10 @@ function +(🍎::AbstractFruit, 🍌::AbstractFruit)
     return Fruple{2}((🍎,🍌))
 end
 
-function +(🍎🍎::Fruple{N}, 🍌🍌::Fruple{M}) where {N <: Int, M <: Int}
-    nm = length(🍎🍎.fruits) + length(🍌🍌.fruits)
-    return Fruple{nm}((🍎🍎.fruits..., 🍌🍌.fruits...))
+function +(🍎🍎::Fruple{N}, 🍌🍌::Fruple{M}) where {N, M}
+    return Fruple{N + M}((🍎🍎.fruits..., 🍌🍌.fruits...))
 end
 
-function +(🍎🍎::Fruple{N}, 🍌🍌::Fruple{N}) where {N <: Number}
-    nm = length(🍎🍎.fruits) + length(🍌🍌.fruits)
-    return Fruple{nm}((🍎🍎.fruits..., 🍌🍌.fruits...))
-end
-
-# Needs this to find the method
-function +(🍎🍎::Fruple{2}, 🍌🍌::Fruple{2})
-    return Fruple{4}((🍎🍎.fruits..., 🍌🍌.fruits...))
-end
 
 
 ###
@@ -58,8 +48,4 @@ end
 🍌 = Banana(1,2,3,4)
 🍎🍌 = 🍎+🍌
 
-🍎🍎🍌🍌 = Fruple{4}((🍎🍌.fruits..., 🍎🍌.fruits...))
-
-nm = length(🍎🍎.fruits) + length(🍌🍌.fruits)
-🍌🍌 = FruitCombo{nm}((🍎🍎.fruits..., 🍌🍌.fruits...))
-🍎🍌 + 🍎🍌 + 🍎🍌
+fruit_bowl = 🍎🍌 + 🍎🍌 + 🍎🍌
