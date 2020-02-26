@@ -40,8 +40,13 @@ function +(🍎🍎::Fruple{N}, 🍌🍌::Fruple{M}) where {N, M}
     return Fruple{N + M}((🍎🍎.fruits..., 🍌🍌.fruits...))
 end
 
+function +(🍎::AbstractFruit, 🍎🍌::Fruple{M}) where M
+    return Fruple{1 + M}((🍎🍌.fruits..., 🍎))
+end
 
-
+function +(🍎🍌::Fruple{M}, 🍎::AbstractFruit) where M
+    return Fruple{1 + M}((🍎🍌.fruits..., 🍎))
+end
 ###
 # test
 🍎 = Apple(1,2,3)
@@ -49,3 +54,5 @@ end
 🍎🍌 = 🍎+🍌
 
 fruit_bowl = 🍎🍌 + 🍎🍌 + 🍎🍌
+
+fruit_bowl = fruit_bowl + 🍎

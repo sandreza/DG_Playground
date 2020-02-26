@@ -54,6 +54,10 @@ struct Inflow{𝒯} <: AbstractBoundaryCondition
     in::𝒯
 end
 
+struct Inflow2{𝒯} <: AbstractBoundaryCondition
+    in::𝒯
+end
+
 struct Outflow{𝒯} <: AbstractBoundaryCondition
     out::𝒯
 end

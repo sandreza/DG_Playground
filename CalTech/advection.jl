@@ -16,9 +16,9 @@ xmax = 2π  # right endpoint of domain
 u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
 # Define Flux
-α = 0.0 # Rusanov prameter
+α = 0.1 # Rusanov prameter
 flux_type = Rusanov(α)
-field_bc = Inflow(0.5)
+field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -26,7 +26,7 @@ flux_calculate = calculate_flux
 Φ = Flux(flux_type, flux_field, state, flux_calculate)
 # Define Advection parameters
 dt = cfl(𝒢, c, α = α) # CFL timestep
-tspan  = (0.0, 2.0)
+tspan  = (0.0,2.0)
 params = (∇, Φ)
 rhs! = advection!
 
