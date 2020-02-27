@@ -1,56 +1,59 @@
 # Why?
 
-abstract type AbstractFruit end
+abstract type AbstractFruit{𝒮} end
 abstract type AbstractFruitCombo end
 
 import Base: +, *, /, -
 import LinearAlgebra: ⋅
 
-expr = :(1+1)
-eval(expr)
-a = 3
-b = 4
-expr = :($a+$b)
-eval(expr)
-
-
-struct Apple{𝒯, 𝒮, 𝒰} <: AbstractFruit
-    delicious::𝒯
-    nutricious::𝒮
-    eaten::𝒰
+struct Smoothie{𝒯, N} <: AbstractFruit{𝒯}
+    fruits::NTuple{N,AbstractFruit{𝒯}}
 end
 
-struct Banana{𝒯, 𝒮, 𝒰, 𝒱} <: AbstractFruit
-    delicious::𝒯
-    nutricious::𝒮
-    eaten::𝒰
-    peeled::𝒱
+function *(🍎::AbstractFruit{𝒯}, 🍌::AbstractFruit{𝒯}) where 𝒯
+    return Smoothie{𝒯, N}((🍎, 🍌))
 end
 
 # A tuple of fruits
-struct Fruple{N} <: AbstractFruitCombo
-    fruits::NTuple{N,AbstractFruit}
+struct Fruple{N, 𝒯} <: AbstractFruitCombo
+    fruits::NTuple{N, AbstractFruit{𝒯}}
 end
 
-function +(🍎::AbstractFruit, 🍌::AbstractFruit)
-    return Fruple{2}((🍎,🍌))
+function +(🍎::AbstractFruit{𝒯}, 🍌::AbstractFruit{𝒯}) where 𝒯
+    return Fruple{2, 𝒯}((🍎,🍌))
 end
 
-function +(🍎🍎::Fruple{N}, 🍌🍌::Fruple{M}) where {N, M}
-    return Fruple{N + M}((🍎🍎.fruits..., 🍌🍌.fruits...))
+function +(🍎🍎::Fruple{N, 𝒯}, 🍌🍌::Fruple{M, 𝒯}) where {N, M, 𝒯}
+    return Fruple{N + M, 𝒯}((🍎🍎.fruits..., 🍌🍌.fruits...))
 end
 
-function +(🍎::AbstractFruit, 🍎🍌::Fruple{M}) where M
-    return Fruple{1 + M}((🍎🍌.fruits..., 🍎))
+function +(🍎::AbstractFruit{𝒯}, 🍎🍌::Fruple{M, 𝒯}) where {M, 𝒯}
+    return Fruple{1 + M, 𝒯}((🍎🍌.fruits..., 🍎))
 end
 
-function +(🍎🍌::Fruple{M}, 🍎::AbstractFruit) where M
-    return Fruple{1 + M}((🍎🍌.fruits..., 🍎))
+function +(🍎🍌::Fruple{M, 𝒯}, 🍎::AbstractFruit{𝒯}) where {M, 𝒯}
+    return Fruple{1 + M , 𝒯}((🍎🍌.fruits..., 🍎))
 end
 ###
+
+struct Apple{𝒯, 𝒮, 𝒰, 𝒱} <: AbstractFruit{𝒯}
+    tag::𝒯
+    delicious::𝒮
+    nutricious::𝒰
+    eaten::𝒱
+end
+
+struct Banana{𝒯, 𝒮, 𝒰, 𝒱, 𝒲} <: AbstractFruit{𝒯}
+    tag::𝒯
+    delicious::𝒮
+    nutricious::𝒰
+    eaten::𝒱
+    peeled::𝒲
+end
+
 # test
-🍎 = Apple(1,2,3)
-🍌 = Banana(1,2,3,4)
+🍎 = Apple(true, false, true)
+🍌 = Banana(true,true,true,true)
 🍎🍌 = 🍎+🍌
 
 fruit_bowl = 🍎🍌 + 🍎🍌 + 🍎🍌

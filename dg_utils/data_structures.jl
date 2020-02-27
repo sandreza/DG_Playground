@@ -39,6 +39,10 @@ struct Rusanov{𝒯} <: AbstractFluxMethod
     α::𝒯
 end
 
+struct RusanovBC{𝒯} <: AbstractFluxMethod
+    α::𝒯
+end
+
 struct Slider{𝒯, 𝒮} <: AbstractFluxMethod
     α::𝒯
     v::𝒮
@@ -46,6 +50,12 @@ end
 
 # Boundary Conditions
 struct Dirichlet{𝒯} <: AbstractBoundaryCondition
+    left::𝒯
+    right::𝒯
+end
+
+# Boundary Conditions
+struct Dirichlet2{𝒯} <: AbstractBoundaryCondition
     left::𝒯
     right::𝒯
 end

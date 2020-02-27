@@ -6,7 +6,7 @@ using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
 K = 16     # Number of elements
-n = 2      # Polynomial Order
+n = 8      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
@@ -16,9 +16,9 @@ xmax = 2π  # right endpoint of domain
 u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
 # Define hyperbolic flux
-α = 1.0 # Rusanov prameter
-flux_type = Rusanov(α)
-field_bc = Periodic()
+α = 0.0 # Rusanov prameter
+flux_type = RusanovBC(α)
+field_bc = Dirichlet2(0.0,0.0)
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -27,7 +27,7 @@ state = copy(u)
 # Define Diffusive flux
 α = 0.0 # Rusanov parameter
 flux_type = Rusanov(α)
-field_bc = Periodic()
+field_bc = FreeFlux()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -35,8 +35,8 @@ state = copy(u)
 
 # Define Advective flux
 α = -1.0 # Rusanov parameter (negative)
-flux_type = Rusanov(α)
-field_bc = Periodic()
+flux_type = RusanovBC(α)
+field_bc = Dirichlet(0.0,0.0)
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -44,6 +44,7 @@ state = copy(u)
 
 # Define Diffusion parameters
 dt = cfl_advection_diffusion(𝒢, c) # CFL timestep
+dt = 0.0001
 tspan  = (0.0, 2.0)
 params = (∇, Φ, ∇Φ, 𝒜Φ)
 rhs! = advection_diffusion!
