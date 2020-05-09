@@ -2,7 +2,7 @@ include("../dg_utils/data_structures.jl")
 # Define Flux Calculation
 
 # Define wavespeed
-const c = 2π   # speed of wave
+const c = -2π   # speed of wave
 
 function calculate_flux(x::AbstractArray)
     return c .* x

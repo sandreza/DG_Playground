@@ -6,19 +6,19 @@ using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
 K = 16     # Number of elements
-n = 8      # Polynomial Order
+n = 2      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
 ∇ = Gradient(𝒢)
 
 # Define Initial Condition
-u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
+u = @.  exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
 # Define hyperbolic flux
 α = 0.0 # Rusanov prameter
-flux_type = RusanovBC(α)
-field_bc = Dirichlet2(0.0,0.0)
+flux_type = Rusanov(α)
+field_bc = FreeFlux()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -27,16 +27,16 @@ state = copy(u)
 # Define Diffusive flux
 α = 0.0 # Rusanov parameter
 flux_type = Rusanov(α)
-field_bc = FreeFlux()
+field_bc = Dirichlet(0.0,0.0)
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
 ∇Φ = Flux(flux_type, flux_field, state, calculate_parabolic_flux)
 
 # Define Advective flux
-α = -1.0 # Rusanov parameter (negative)
-flux_type = RusanovBC(α)
-field_bc = Dirichlet(0.0,0.0)
+α = -0.0 # Rusanov parameter (negative)
+flux_type = Rusanov(α)
+field_bc = FreeFlux()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
