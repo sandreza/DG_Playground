@@ -1,12 +1,10 @@
-include("../dg_utils/data_structures.jl")
-include("../dg_utils/mesh.jl")
+using DG_Playground
 include("advection_diffusion_utils.jl")
-
 using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
-K = 16     # Number of elements
-n = 2      # Polynomial Order
+K = 10     # Number of elements
+n = 4      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
@@ -15,10 +13,10 @@ xmax = 2π  # right endpoint of domain
 # Define Initial Condition
 u = @.  exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
-# Define hyperbolic flux
-α = 0.0 # Rusanov prameter
+# Define hyperbolic flux (associated with diffusion)
+α = -0.0 # Rusanov prameter
 flux_type = Rusanov(α)
-field_bc = FreeFlux()
+field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -27,7 +25,7 @@ state = copy(u)
 # Define Diffusive flux
 α = 0.0 # Rusanov parameter
 flux_type = Rusanov(α)
-field_bc = Dirichlet(0.0,0.0)
+field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -36,24 +34,25 @@ state = copy(u)
 # Define Advective flux
 α = -0.0 # Rusanov parameter (negative)
 flux_type = Rusanov(α)
-field_bc = FreeFlux()
+field_bc = Periodic()
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
 𝒜Φ = Flux(flux_type, flux_field, state, calculate_advective_flux)
 
 # Define Diffusion parameters
-dt = cfl_advection_diffusion(𝒢, c) # CFL timestep
-dt = 0.0001
-tspan  = (0.0, 2.0)
+advective_dt = cfl_advection_diffusion(𝒢, α, CFL = 1.0) # CFL timestep
+diffusive_dt = cfl_diffusive(𝒢, κ; α = κ, CFL = 0.1)
+dt = diffusive_dt * 0.01
+tspan  = (0.0, 10.0)
 params = (∇, Φ, ∇Φ, 𝒜Φ)
 rhs! = advection_diffusion!
 
 # Define ODE problem
 prob = ODEProblem(rhs!, u, tspan, params);
 # Solve it
-sol  = solve(prob, Tsit5(), dt=dt, adaptive = false);
-
+sol  = solve(prob, Euler(), dt=dt, adaptive = false);
+# Heun(), RK4, Tsit5
 # Plot it
 theme(:juno)
 nt = length(sol.t)

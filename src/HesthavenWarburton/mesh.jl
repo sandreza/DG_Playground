@@ -1,6 +1,4 @@
-include("utils.jl")
-
-using SparseArrays # for connectivity matrix
+include("./utils.jl")
 
 abstract type AbstractMesh end
 
@@ -339,7 +337,8 @@ make_periodic1D!(vmapP, u)
 
 # Description
 
-    makes the grid periodic by modifying vmapP
+    makes the grid periodic by modifying vmapP.
+    Assumes that the first node is connected to the last.
 
 # Arguments
 
@@ -391,75 +390,75 @@ struct Mesh{T,S,U,W} <: AbstractMesh
     rx::T
     normals::T
     fscale::T
+end
 
-    """
-    mesh(KK, nn, xmin, xmax)
+"""
+mesh(K, n, xmin, xmax)
 
-    # Description
+# Description
 
-        initialize mesh struct
+    outer_constructor mesh struct
 
-    # Arguments
+# Arguments
 
-        KK: number of elements
-        nn: polynomial order
-        xmin: lower bound
-        xmax: upper bound
+- `K`: number of elements
+- `n`: polynomial order
+- `xmin`: lower bound
+- `xmax`: upper bound
 
 
-    # Return Values: x
-        return grid values
+# Return Values: x
+    return grid values
 
-    """
-    function Mesh(KK, nn, xmin, xmax)
-        # initialize parameters
-        K = KK
-        α = 0; β = 0;
-        n = nn
+"""
+function Mesh(KK, nn, xmin, xmax)
+    # initialize parameters
+    K = KK
+    α = 0; β = 0;
+    n = nn
 
-        # number of vertices
-        nGL = n+1
-        nFP = 1
-        nFaces = 2
+    # number of vertices
+    nGL = n+1
+    nFP = 1
+    nFaces = 2
 
-        # compute Gauss Lobatto grid
-        r = jacobiGL(α, β, n)
+    # compute Gauss Lobatto grid
+    r = jacobiGL(α, β, n)
 
-        # build grid
-        VX, EtoV = unimesh1D(xmin, xmax, K)
+    # build grid
+    VX, EtoV = unimesh1D(xmin, xmax, K)
 
-        # build coordinates of all the nodes
-        x = gridvalues1D(VX, EtoV, r)
+    # build coordinates of all the nodes
+    x = gridvalues1D(VX, EtoV, r)
 
-        # build connectivity matrix
-        EtoE, EtoF = connect1D(EtoV)
+    # build connectivity matrix
+    EtoE, EtoF = connect1D(EtoV)
 
-        # build face masks
-        fmask1,fmask2 = fmask1D(r)
+    # build face masks
+    fmask1,fmask2 = fmask1D(r)
 
-        # build connectivity maps
-        vmapM,vmapP,vmapB,mapB, mapI,mapO,vmapI,vmapO = buildmaps1D(K, nGL,nFP,nFaces, fmask1, EtoE,EtoF, x)
+    # build connectivity maps
+    vmapM,vmapP,vmapB,mapB, mapI,mapO,vmapI,vmapO = buildmaps1D(K, nGL,nFP,nFaces, fmask1, EtoE,EtoF, x)
 
-        # build differentiation matrix
-        D = dmatrix(r, α, β, n)
+    # build differentiation matrix
+    D = dmatrix(r, α, β, n)
 
-        # build surface integral terms
-        V = vandermonde(r, α, β, n)
-        lift = lift1D(V)
+    # build surface integral terms
+    V = vandermonde(r, α, β, n)
+    lift = lift1D(V)
 
-        # build mass matrix and inverse of mass matrix
-        Mi = V * V'
-        M = inv(Mi)
+    # build mass matrix and inverse of mass matrix
+    Mi = V * V'
+    M = inv(Mi)
 
-        # calculate geometric factors
-        rx,J = geometric_factors(x, D)
+    # calculate geometric factors
+    rx,J = geometric_factors(x, D)
 
-        # build surface normals
-        normals = normals1D(K)
+    # build surface normals
+    normals = normals1D(K)
 
-        # build inverse metric at the surface
-        fscale = 1 ./ J[fmask2,:]
+    # build inverse metric at the surface
+    fscale = 1 ./ J[fmask2,:]
 
-        return new{typeof(x),typeof(K),typeof(r),typeof(vmapP)}(K,n, nFP,nFaces, r,x, vmapM,vmapP,vmapB,mapB, mapI,mapO,vmapI,vmapO, D,M,Mi,lift,rx,normals,fscale)
-    end
+    return Mesh{typeof(x),typeof(K),typeof(r),typeof(vmapP)}(K, n, nFP, nFaces, r, x, vmapM, vmapP, vmapB, mapB, mapI, mapO, vmapI, vmapO, D, M, Mi, lift, rx, normals, fscale)
 end

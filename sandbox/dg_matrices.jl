@@ -2,7 +2,7 @@ include("../dg_utils/data_structures.jl")
 include("../dg_utils/utils.jl")
 include("../dg_utils/mesh.jl")
 
-n = 2
+n = 5
 α = β = 0.0
 # compute Gauss Lobatto grid
 r = jacobiGL(α, β, n)
@@ -20,3 +20,6 @@ M = inv(Mi)
 
 S  = M * D
 Sᵀ = S'
+
+###
+eigvals(M + S * Mi * S')

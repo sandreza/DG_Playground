@@ -1,7 +1,3 @@
-
-include("mesh.jl")
-
-
 """
 Field1D(mesh)
 
@@ -25,16 +21,16 @@ struct Field1D{T}
     u̇::T
     flux::T
     r::T
+end
 
-    function Field1D(mesh)
-        # set up the solution
-        u    = copy(mesh.x)
-        u̇    = copy(mesh.x)
-        flux = zeros(mesh.nFP * mesh.nFaces, mesh.K)
-        r    = copy(mesh.x)
+function Field1D(mesh)
+    # set up the solution
+    u    = copy(mesh.x)
+    u̇    = copy(mesh.x)
+    flux = zeros(mesh.nFP * mesh.nFaces, mesh.K)
+    r    = copy(mesh.x)
 
-        return new{typeof(u)}(u, u̇, flux, r)
-    end
+    return Field1D{typeof(u)}(u, u̇, flux, r)
 end
 
 """

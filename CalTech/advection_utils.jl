@@ -1,4 +1,3 @@
-include("../dg_utils/data_structures.jl")
 # Define Flux Calculation
 
 # Define wavespeed

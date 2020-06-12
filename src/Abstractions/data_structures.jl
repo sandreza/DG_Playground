@@ -1,6 +1,5 @@
 # Defines DG data structures for convenience
 # Define abstract types
-include("mesh.jl")
 
 import Base.+, Base.*, Base./ , Base.convert, Base.promote_rule, LinearAlgebra.⋅
 
@@ -154,5 +153,3 @@ function compute_volume_terms(∇::AbstractArray, Φ::AbstractField, volume_size
     @. q *= volume_size
     return q
 end
-
-include("compute_surface.jl")

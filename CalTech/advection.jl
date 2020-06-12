@@ -1,8 +1,6 @@
-include("../dg_utils/data_structures.jl")
-include("../dg_utils/utils.jl")
-include("../dg_utils/mesh.jl")
+using DG_Playground
 include("advection_utils.jl")
-using Plots, DifferentialEquations, JLD2, Printf
+using Plots, DifferentialEquations, JLD2, Printf, LinearAlgebra
 
 # Mesh Stuff
 K = 16     # Number of elements
