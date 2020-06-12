@@ -1,5 +1,3 @@
-include("../dg_utils/data_structures.jl")
-
 function calculate_hyperbolic_flux(x::AbstractArray)
     return x
 end
