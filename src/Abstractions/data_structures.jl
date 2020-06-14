@@ -106,6 +106,40 @@ function build(∇::AbstractGradient, bc::AbstractBoundaryCondition, flux_type::
     return A
 end
 
+"""
+build_operator(affine_operator!, 𝒢::Mesh; mass_matrix = false)
+
+# Description
+builds affine operator associated with operator
+
+# Comment
+With non-homogenous boundary conditions becomes affine
+"""
+function build_operator(affine_operator!, 𝒢::Mesh; mass_matrix = false)
+    x = copy(𝒢.x)
+    Ax = copy(𝒢.x)
+    eⁿ = zeros(length(x))
+    A = zeros(eltype(x), length(x), length(x))
+    x .*= 0.0
+    affine_operator!(Ax, x)
+    b = copy(Ax)
+    for i in eachindex(x)
+        eⁿ[i] = 1.0
+        x[:] .= eⁿ
+        affine_operator!(Ax, x)
+        Ax -= b
+        eⁿ[i] = 0.0
+        if mass_matrix
+            Ax =  𝒢.M * Ax
+            @. Ax /= 𝒢.rx
+            @. A[:, i] = Ax[:]
+        else
+            @. A[:, i] = Ax[:]
+        end
+    end
+    return A, b[:]
+end
+
 # Binary Operators
 function ⋅(∇::AbstractGradient, Φ::AbstractFlux)
     q = compute_volume_terms(∇.grid.D, Φ.field, ∇.grid.rx)

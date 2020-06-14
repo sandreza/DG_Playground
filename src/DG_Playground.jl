@@ -41,6 +41,7 @@ export  NeglectFlux,
 
 ## Operators
 export  build,
+        build_operator,
         ⋅,
         ⊗,
         compute_volume_terms,

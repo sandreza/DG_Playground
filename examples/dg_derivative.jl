@@ -27,4 +27,4 @@ flux_type = Rusanov(c)
 tmp4 = ∇⋅Φ
 p4 = plot(𝒢.x, tmp4, legend = false, title = " DG derivative Rusonov", grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
 
-plot(p1,p2,p3,p4)
+plot(p1, p2, p3, p4)
