@@ -15,12 +15,14 @@ include("./Abstractions/data_structures.jl")
 include("./Abstractions/compute_surface.jl")
 
 # Exports
+
+## Structs
 export  Mesh,
         Field1D,
         Gradient,
         Flux,
         Field
-
+## Fluxes / Boundary Conditions
 export  NeglectFlux,
         Central,
         Upwind,
@@ -37,11 +39,16 @@ export  NeglectFlux,
         NoFlux,
         FreeFlux
 
+## Operators
 export  build,
         ⋅,
         ⊗,
         compute_volume_terms,
         compute_surface_terms
-
+## Basic DG Atoms
+export  jacobiGL,
+        dmatrix,
+        vandermonde,
+        lift1D
 
 end # module
