@@ -47,3 +47,7 @@ Ax = copy(u)
 A, b = build_operator(affine_operator!, 𝒢)
 sparse(A)
 spy(A)
+
+###
+rb = reshape(b, size(𝒢.x))
+plot(𝒢.x, rb)
