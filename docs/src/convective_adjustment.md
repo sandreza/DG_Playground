@@ -14,9 +14,18 @@ Typically the effect of convective adjustment is captured via a nonlinear diffus
 \end{cases}
 \end{aligned}
 ```
-where $$ \kappa_2 \gg \kappa_1  $$, and $$ z $$ is aligned with the direciton of gravity. Thinking of $$ \rho $$ as density, a simple parameterization of convection is of the form
+where `` \kappa_2 \gg \kappa_1 ``, and `` z `` is aligned with the direciton of gravity. Thinking of $$ \rho $$ as density, a simple parameterization of convection is of the form
 ```math
 \begin{aligned}
 \partial_t \rho &= \nabla \cdot \left[ \kappa(\rho) \nabla \rho \right]
+\end{aligned}
+```
+
+## Typical Time-Discretization
+
+A typical time-discretization would be
+```math
+\begin{aligned}
+\rho^{n+1} - \Delta t \nabla \cdot \left[ \kappa(\rho^{n}) \nabla \rho^{n+1} \right] &= 0.0
 \end{aligned}
 ```
