@@ -1,6 +1,4 @@
-include("../dg_utils/data_structures.jl")
-include("../dg_utils/utils.jl")
-include("../dg_utils/mesh.jl")
+using DG_Playground
 
 n = 5
 α = β = 0.0

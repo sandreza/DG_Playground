@@ -14,7 +14,7 @@ Typically the effect of convective adjustment is captured via a nonlinear diffus
 \end{cases}
 \end{aligned}
 ```
-where `` \kappa_2 \gg \kappa_1 ``, and `` z `` is aligned with the direciton of gravity. Thinking of $$ \rho $$ as density, a simple parameterization of convection is of the form
+where `` \kappa_1 \gg \kappa_2 ``, and `` z `` is aligned with the direction of gravity. Thinking of $$ \rho $$ as density, a simple parameterization of convection is of the form
 ```math
 \begin{aligned}
 \partial_t \rho &= \nabla \cdot \left[ \kappa(\rho) \nabla \rho \right]
@@ -26,6 +26,7 @@ where `` \kappa_2 \gg \kappa_1 ``, and `` z `` is aligned with the direciton of 
 A typical time-discretization would be
 ```math
 \begin{aligned}
-\rho^{n+1} - \Delta t \nabla \cdot \left[ \kappa(\rho^{n}) \nabla \rho^{n+1} \right] &= 0.0
+\rho^{n+1} - \Delta t \partial_z \left[ \kappa(\rho^{n}) \partial_z \rho^{n+1} \right] &= \rho^{n} + \Delta t \left( f^n + \nabla^H \cdot \left[ \kappa(\rho^n) \nabla^H \rho^n \right] \right)
 \end{aligned}
 ```
+where the forcing function `` f^n `` comes from boundary condition and we have split the gradient operator into the vertically aligned component ``z`` and the other (horizontal) directions.

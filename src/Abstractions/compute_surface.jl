@@ -3,6 +3,12 @@ function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Abstrac
     return 𝒢.lift * zeros((𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
 end
 
+# Note that there needs to be changes to handle
+# time dependent fluxes and boudnary conditions
+# Furthermore fluxes that change on the surface also need
+# to be changed
+
+
 ################################
 # Periodic Boundary Conditions #
 ################################

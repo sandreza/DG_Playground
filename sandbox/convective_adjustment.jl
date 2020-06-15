@@ -38,7 +38,7 @@ using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
 K = 5      # Number of elements
-n = 1      # Polynomial Order
+n = 4      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
@@ -103,10 +103,12 @@ num = floor(Int, nt/step)
 indices = step * collect(1:num)
 pushfirst!(indices, 1)
 push!(indices, nt)
-for i in indices
+anim = @animate for i in indices
     plt = plot(sol.u[i], 𝒢.x, xlims=(xmin, xmax), ylims = (-0.1,2π), marker = 3,    leg = false)
     plot!(sol.u[1], 𝒢.x, xlims = (xmin, xmax), ylims = (-0.1,2π), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     plot!(xlabel = "Temperature", ylabel = "Height")
     display(plt)
     # sleep(0.25)
 end
+
+gif(anim, pwd() * "/ca_2_scratch.gif", fps = 15)
