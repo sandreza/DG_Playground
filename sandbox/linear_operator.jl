@@ -6,7 +6,7 @@ using Plots, DifferentialEquations, JLD2, Printf
 
 # Mesh Stuff
 K = 16     # Number of elements
-n = 2      # Polynomial Order
+n = 4      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
 𝒢 = Mesh(K, n, xmin, xmax) # Generate Uniform Mesh
@@ -15,10 +15,18 @@ xmax = 2π  # right endpoint of domain
 # Define Initial Condition
 u = @. exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
+a = 0.0
+b = 1.0
+bc = [a b]
+neumann = false
 # Define hyperbolic flux
 α = 0.0 # Rusanov prameter
 flux_type = Rusanov(α)
-field_bc = Dirichlet(0.0, 1.0)
+if neumann
+    field_bc = FreeFlux()
+else
+    field_bc = Dirichlet(bc...)
+end
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -27,7 +35,11 @@ state = copy(u)
 # Define Diffusive flux
 α = 0.0 # Rusanov parameter
 flux_type = Rusanov(α)
-field_bc = FreeFlux()
+if neumann
+    field_bc = Dirichlet(bc...)
+else
+    field_bc = FreeFlux()
+end
 field_data = copy(u)
 flux_field = Field(field_data, field_bc)
 state = copy(u)
@@ -48,6 +60,12 @@ A, b = build_operator(affine_operator!, 𝒢)
 sparse(A)
 spy(A)
 
+Λ = eigvals(A)
+V = eigvecs(A)
 ###
 rb = reshape(b, size(𝒢.x))
-plot(𝒢.x, rb)
+plot(𝒢.x, rb, legend = false)
+
+###
+rb = reshape(V[:,end], size(𝒢.x))
+plot(𝒢.x, rb, legend = false)

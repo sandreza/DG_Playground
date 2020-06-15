@@ -6,6 +6,7 @@ makedocs(
     format = Documenter.HTML(),
     pages = [
     "Home" => "index.md",
+    "Convective Adjustment" => "convective_adjustment.md",
     ],
     modules = [DG_Playground]
 )
