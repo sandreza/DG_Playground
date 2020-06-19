@@ -5,7 +5,7 @@ using DG_Playground, LinearAlgebra, SparseArrays, Plots
 ca_operator_constructor(h, Δt, κ¹, κ², L, K, n; μ = 1.0)
 
 # Description
- Constructions a typical DG linear operator for ca (Convective Adjustment)
+ Constructions a typical DG linear operator for ca (Convective Adjustment). It is of the form A = μ + ∂ᶻ(κ(h) ∂ᶻ), where h is a parameter that denotes the transition from a diffusivity κ² to κ¹, in a domain [0, L]. K corresponds to the number of elements and n corresponds to the polynomial order. By default Neumann boundary conditions are assumed
 
 # Arguments
 
