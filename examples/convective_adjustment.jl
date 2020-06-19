@@ -16,8 +16,6 @@ function calculate_parabolic_flux(x::Number)
     return diffusivity(x) * x
 end
 
-
-
 # Define right hand side of the differential equation
 function convective_adjustment!(u̇, u, params, t)
     # unpack params

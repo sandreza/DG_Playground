@@ -109,10 +109,21 @@ end
 simple_operator_constructor(h) = simple_operator_constructor(h, γ, κ¹, κ², L, K, n, μ = 0.0)
 
 # Define operators
-for v in 0:11
+vector_space_size = K * (n+1)
+# for convenience
+all_operators = []
+for v in 0:vector_space_size+1
    Llabel = Meta.parse("L" * string(v))
    κlabel = Meta.parse("κ" * string(v))
-   @eval $Llabel, $κlabel  = simple_operator_constructor($v / 10)
+   @eval $Llabel, $κlabel  = simple_operator_constructor($v / vector_space_size)
+   @eval push!(all_operators, $Llabel)
+end
+###
+distances = zeros(vector_space_size + 2 , vector_space_size + 2)
+for i in eachindex(all_operators)
+    for j in eachindex(all_operators)
+        distances[i,j] = norm(all_operators[i]-all_operators[j])
+    end
 end
 ###
 theme(:juno)
