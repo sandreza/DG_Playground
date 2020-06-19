@@ -300,7 +300,7 @@ julia> x = jacobiGL(0, 0, 4)
 ```
 """
 function jacobiGL(α, β, N)
-    N == 0 && error("What are you doing? Gauss-Lobatto points only make sense if N >= 1.")
+    N == 0 && error("What are you doing? Go back to finite volume land.")
     N == 1 && return [-1, 1]
 
     x = zeros(N+1)

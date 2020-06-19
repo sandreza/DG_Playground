@@ -28,8 +28,7 @@ function conjugate_gradient!(L, x⁰, b; P = x->x, tolerance = eps(1.0), maximum
     r⁰ = b - L(x⁰)
     z⁰ = P(r⁰)
     p⁰ = copy(z⁰)
-    println("At iteration " * string(0) * " the (1) p0 vector is ")
-    println(p⁰)
+
     if track_residual
         r_tracked = []
         push!(r_tracked, norm(r⁰))
@@ -48,9 +47,6 @@ function conjugate_gradient!(L, x⁰, b; P = x->x, tolerance = eps(1.0), maximum
         @. x⁰ += α * p⁰
         # form new residual
         r¹ = r⁰ - α .* Lp
-
-        println("At iteration " * string(j) * " the residual is ")
-println(r¹)
 
         # check to see if the update was reasonable
         if track_residual
@@ -73,12 +69,6 @@ println(r¹)
         @. p⁰ = z¹ + β * p⁰
         @. z⁰ = z¹
         @. r⁰ = r¹
-        println("At iteration " * string(j) * " the state vector is ")
-println(x⁰)
-println("At iteration " * string(j) * " the p0 vector is ")
-println(p⁰)
-println("At iteration " * string(j) * " the beta is ")
-println(β)
     end
     if track_residual
         return r_tracked

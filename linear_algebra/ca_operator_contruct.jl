@@ -2,10 +2,10 @@ using DG_Playground, LinearAlgebra, SparseArrays, Plots
 
 
 """
-simple_operator_constructor(h, Δt, κ¹, κ², L, K, n; μ = 1.0)
+ca_operator_constructor(h, Δt, κ¹, κ², L, K, n; μ = 1.0)
 
 # Description
- Constructions a typical DG linear operator
+ Constructions a typical DG linear operator for ca (Convective Adjustment)
 
 # Arguments
 
@@ -26,7 +26,7 @@ simple_operator_constructor(h, Δt, κ¹, κ², L, K, n; μ = 1.0)
 # Comment
 The size of the matrix is  K(n+1) x K(n+1).
 """
-function simple_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0)
+function ca_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0)
     function calculate_hyperbolic_flux(x::Number)
         return x
     end
@@ -106,7 +106,7 @@ end
 
 ###
 (γ, κ¹, κ², L, K, n) = (1.0, 10.0, 1.0, 1.0, 10, 3)
-simple_operator_constructor(h) = simple_operator_constructor(h, γ, κ¹, κ², L, K, n, μ = 0.0)
+simple_operator_constructor(h) = ca_operator_constructor(h, γ, κ¹, κ², L, K, n, μ = 0.0)
 
 # Define operators
 vector_space_size = K * (n+1)

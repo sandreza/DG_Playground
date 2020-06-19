@@ -110,7 +110,7 @@ end
 build_operator(affine_operator!, 𝒢::Mesh; mass_matrix = false)
 
 # Description
-builds affine operator associated with operator
+builds affine operator associated with DG operator
 
 # Comment
 With non-homogenous boundary conditions becomes affine

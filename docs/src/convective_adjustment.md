@@ -1,6 +1,6 @@
 # Convective Adjustment
 
-Convective adjustment is a simple parameterization that attempts the capture the effect of mixing due to convection. Physically this occurs because dense water parcels tend to sink and and light water parcels tend to rise
+Convective adjustment is a simple parameterization that attempts the capture the effect of mixing due to [convection](https://en.wikipedia.org/wiki/Convection). Physically this occurs because dense water parcels tend to sink and and light water parcels tend to rise.
 
 ## Mathematical Form
 
@@ -20,6 +20,7 @@ where `` \kappa_1 \gg \kappa_2 ``, and `` z `` is aligned with the direction of 
 \partial_t \rho &= \nabla \cdot \left[ \kappa(\rho) \nabla \rho \right]
 \end{aligned}
 ```
+Intuitively, the above nonlinear diffusivity models the effect of mixing when heavy fluid parcels overlie light fluid parcels. Here the  mixing is modeled via diffusion with a large diffusivity constant. This is by no means the only way to model the effect of mixing, but it is a starting point.
 
 ## Typical Time-Discretization
 
@@ -29,7 +30,7 @@ A typical time-discretization would be
 \rho^{n+1} - \Delta t \partial_z \left[ \kappa(\rho^{n}) \partial_z \rho^{n+1} \right] &= \rho^{n} + \Delta t \left( f^n + \nabla^H \cdot \left[ \kappa(\rho^n) \nabla^H \rho^n \right] \right)
 \end{aligned}
 ```
-where the forcing function `` f^n `` comes from boundary condition and we have split the gradient operator into the vertically aligned component ``z`` and the other (horizontal) directions.
+where the forcing function `` f^n `` comes from boundary condition and we have split the gradient operator into the vertically aligned component ``z`` and the other (horizontal) directions. When discretized, the time-stepping method yields a [Helmholtz](https://en.wikipedia.org/wiki/Helmholtz_equation)-like problem that needs to be solved every timestep.
 
 ## Simplification
 
