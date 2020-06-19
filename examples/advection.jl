@@ -3,7 +3,7 @@ include("advection_utils.jl")
 using Plots, DifferentialEquations, JLD2, Printf, LinearAlgebra
 
 # Mesh Stuff
-K = 16     # Number of elements
+K = 6     # Number of elements
 n = 2      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain

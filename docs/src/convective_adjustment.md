@@ -30,3 +30,17 @@ A typical time-discretization would be
 \end{aligned}
 ```
 where the forcing function `` f^n `` comes from boundary condition and we have split the gradient operator into the vertically aligned component ``z`` and the other (horizontal) directions.
+
+## Simplification
+
+There are a wide variety of functional forms that $\kappa(\rho^n)$ can take on, but typically it is similar to
+```math
+\begin{aligned}
+    \kappa(\rho^n) \approx
+    \begin{cases}
+    \kappa_1 & \text{ if } z > h \\
+    \kappa_2 & \text{ if } z \leq h
+    \end{cases}
+\end{aligned}
+```
+where ``z \in [0, L]`` and ``h`` can take on all values between ``[0, L]``. The reason why there is usually just one place that ``\kappa`` changes values of diffusivity has to do typical physical scenarios that arise in the ocean / atmosphere. The ocean interior is stably stratified as there is no appreciably strong convection. In the ocean cooling comes from the surface of the ocean and leads to mixing that starts in the upper ocean and progresses towards the ocean abyss. The solution to linear systems of this form (when ``\Delta t`` becomes large), is essentially constant in the region of high diffusivity.

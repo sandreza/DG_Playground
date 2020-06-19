@@ -112,6 +112,7 @@ simple_operator_constructor(h) = simple_operator_constructor(h, γ, κ¹, κ², 
 vector_space_size = K * (n+1)
 # for convenience
 all_operators = []
+# Define operators L0, L1, L2, ..., LK(n+1)
 for v in 0:vector_space_size+1
    Llabel = Meta.parse("L" * string(v))
    κlabel = Meta.parse("κ" * string(v))
