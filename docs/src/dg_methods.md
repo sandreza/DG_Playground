@@ -218,7 +218,7 @@ The mass and stiffness matrices are
     \end{bmatrix}
 \end{aligned}
 ```
-In DG_Playgroud we can extract these matrices as follows
+In DG_Playground we can extract these matrices as follows
 ```@repl
 using DG_Playground
 n = 2;
@@ -228,8 +228,10 @@ D = dmatrix(r, α, β, n);
 V = vandermonde(r, α, β, n);
 Mi = V * V';
 M = inv(Mi)
-S  = (M * D)'
+Sᵀ  = (M * D)'
 ```
+where ``n`` is the polynomial order, ``M`` is the mass matrix and ``S^T`` is the transpose of the stiffness matrix, and ``\alpha`` and ``\beta`` are the exponents in the weights of the (Jacobi Polynomials](https://en.wikipedia.org/wiki/Jacobi_polynomials).
+
 ### Algebraic Properties of Operators
 We have seen some properties in the previous sections that are particular realizations of more algebraic properties of DG operators. Here we will collect \textbf{three} such algebraic properties.
 
