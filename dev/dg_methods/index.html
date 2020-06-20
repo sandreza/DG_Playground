@@ -96,7 +96,7 @@
   4  &amp; 0  &amp; -4 \\
  -1  &amp; 4 &amp;  3 \\
     \end{bmatrix}
-\end{aligned}\]</div><p>In DG_Playgroud we can extract these matrices as follows</p><pre><code class="language-julia-repl">julia&gt; using DG_Playground
+\end{aligned}\]</div><p>In DG_Playground we can extract these matrices as follows</p><pre><code class="language-julia-repl">julia&gt; using DG_Playground
 
 julia&gt; n = 2;
 
@@ -116,11 +116,11 @@ julia&gt; M = inv(Mi)
   0.133333   1.06667    0.133333
  -0.0666667  0.133333   0.266667
 
-julia&gt; S  = (M * D)&#39;
+julia&gt; Sᵀ  = (M * D)&#39;
 3×3 LinearAlgebra.Adjoint{Float64,Array{Float64,2}}:
  -0.5       -0.666667      0.166667
   0.666667   5.55112e-17  -0.666667
- -0.166667   0.666667      0.5</code></pre><h3 id="Algebraic-Properties-of-Operators-1"><a class="docs-heading-anchor" href="#Algebraic-Properties-of-Operators-1">Algebraic Properties of Operators</a><a class="docs-heading-anchor-permalink" href="#Algebraic-Properties-of-Operators-1" title="Permalink"></a></h3><p>We have seen some properties in the previous sections that are particular realizations of more algebraic properties of DG operators. Here we will collect \textbf{three} such algebraic properties.</p><p>The first is that</p><div>\[\begin{aligned}
+ -0.166667   0.666667      0.5</code></pre><p>where <span>$n$</span> is the polynomial order, <span>$M$</span> is the mass matrix and <span>$S^T$</span> is the transpose of the stiffness matrix, and <span>$\alpha$</span> and <span>$\beta$</span> are the exponents in the weights of the (Jacobi Polynomials](https://en.wikipedia.org/wiki/Jacobi_polynomials).</p><h3 id="Algebraic-Properties-of-Operators-1"><a class="docs-heading-anchor" href="#Algebraic-Properties-of-Operators-1">Algebraic Properties of Operators</a><a class="docs-heading-anchor-permalink" href="#Algebraic-Properties-of-Operators-1" title="Permalink"></a></h3><p>We have seen some properties in the previous sections that are particular realizations of more algebraic properties of DG operators. Here we will collect \textbf{three} such algebraic properties.</p><p>The first is that</p><div>\[\begin{aligned}
     \int_{E} \rho^2 = \rho_i \mathcal{M}_{ij} \rho_j
 \end{aligned}\]</div><p>The proof is a one liner since <span>$\rho = \rho_i \ell_i$</span> and <span>$\int_{E}  (\ell_i \ell_j ) = \mathcal{M}_{ij}$</span>. The calculation is as follows</p><div>\[\begin{aligned}
   \int_{E} \rho^2  = \int_{E} (\rho_i \ell_i) (\rho_j \ell_j ) =  \rho_i \int_{E}  (\ell_i \ell_j ) \rho_j = \rho_i \mathcal{M}_{ij} \rho_j.
@@ -132,4 +132,4 @@ julia&gt; S  = (M * D)&#39;
     \rho_i \mathcal{S}_{ji} \rho_j = \frac{1}{2} \left[ (\rho_N)^2 - (\rho_0)^2 \right]
 \end{aligned}\]</div><p>To see this write</p><div>\[\begin{aligned}
     \mathcal{S}_{ji} = \frac{1}{2}\left(\mathcal{S}_{ji} + \mathcal{S}_{ij} \right) + \frac{1}{2}\left(\mathcal{S}_{ji} - \mathcal{S}_{ij} \right)
-\end{aligned}\]</div><p>and use the fact that the anti-symmetric component vanishes <span>$\rho_i\left(\mathcal{S}_{ji} - \mathcal{S}_{ij} \right) \rho_j = 0$</span></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../convective_adjustment/">Convective Adjustment »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 20 June 2020 01:49">Saturday 20 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</div><p>and use the fact that the anti-symmetric component vanishes <span>$\rho_i\left(\mathcal{S}_{ji} - \mathcal{S}_{ij} \right) \rho_j = 0$</span></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../convective_adjustment/">Convective Adjustment »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 20 June 2020 01:56">Saturday 20 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
