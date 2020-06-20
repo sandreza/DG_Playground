@@ -221,7 +221,7 @@ The mass and stiffness matrices are
 In DG_Playgroud we can extract these matrices as follows
 ```@repl
 using DG_Playground
-n = 3;
+n = 2;
 α = β = 0.0;
 r = jacobiGL(α, β, n);
 D = dmatrix(r, α, β, n);
