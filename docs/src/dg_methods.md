@@ -2,6 +2,10 @@
 
 In [CLIMA](https://github.com/CliMA/ClimateMachine.jl) the [Discontinuous Galerkin](https://en.wikipedia.org/wiki/Discontinuous_Galerkin_method) method serves as our spatial discretization method. It may be thought of as a combination of spectral methods and finite volume methods. The method is a higher-order generalization of a finite volume method.
 
+```@contents
+Pages = ["dg_methods.md"]
+```
+
 
 ## Single Element Equation
 
@@ -77,7 +81,7 @@ is known as the *mass matrix*, a name borrowed from the finite element community
     \mathcal{S}_{ji} = \int_{E} \ell_i' \ell_j,
 \end{aligned}
 ```
-is known as the *stiffness matrix* a name also borrowed from the finite element community. The flipping of the indices on the entries of ``\mathcal{S}`` is purposeful and corresponds to how it is ``usually" defined.
+is known as the *stiffness matrix* a name also borrowed from the finite element community. The flipping of the indices on the entries of ``\mathcal{S}`` is purposeful and corresponds to how it is "usually" defined.
 
 The boundary operators become
 ```math
@@ -89,9 +93,9 @@ and similarly for the other terms. We are abbreviating ``\rho^*(x = 1, t)`` as `
 
 ### Discrete Equations
 
-Once we make choices for our functions ``\ell_i(x)`` we can write a set of discrete equations that represent the Discontinuous Galerkin scheme. We choose the ``\ell_i`` to be \textbf{Lagrange interpolants} of a set of \textbf{nodal points} ``x_j`` for ``j = 0, ..., N``.  Being a Lagrange interpolant, by definition, means that ``\ell_i(x_j) = \delta_{ij}`` where ``\delta_{ij}`` is the \textbf{Kronecker delta}. The nodal points ``x_j`` are chosen as the \textbf{extrema} of \textbf{Jacobi polynomials}. These points are able to be efficiently calculated with either explicit formulas (as is the case with \textbf{Chebyshev polynomials} where ``x_j = \cos(\pi j / N)`` for ``j = 0, ..., N``) or by solving certain eigenvalue problems, as is the case for \textbf{Legendre polynomials}.
+Once we make choices for our functions ``\ell_i(x)`` we can write a set of discrete equations that represent the Discontinuous Galerkin scheme. We choose the ``\ell_i`` to be [Lagrange interpolants](https://en.wikipedia.org/wiki/Lagrange_polynomial) of a set of *nodal points* ``x_j`` for ``j = 0, ..., N``.  Being a Lagrange interpolant, by definition, means that ``\ell_i(x_j) = \delta_{ij}`` where ``\delta_{ij}`` is the [Kronecker delta](https://en.wikipedia.org/wiki/Kronecker_delta). The nodal points ``x_j`` are chosen as the *extrema* of [Jacobi polynomials](https://en.wikipedia.org/wiki/Jacobi_polynomials). These points are able to be efficiently calculated with either explicit formulas (as is the case with *Chebyshev polynomials* where ``x_j = \cos(\pi j / N)`` for ``j = 0, ..., N``) or by solving certain eigenvalue problems, as is the case for *Legendre polynomials*.
 
-Regardless of the exact form, it is always the case that the endpoints are ``1`` and ``-1`` for polynomial orders bigger than one. We will use the convention that ``x_0 = -1`` and ``x_N = 1`` here, but with Chebyshev extrema one usually takes the opposite ordering. For polynomial order zero we take ``x_0 = 0`` and ``\ell_0 = 1`` in order to reduce back to a \textbf{finite volume scheme}. With this convention and the definition of our Lagrange interpolants, we have ``\ell_i(-1) = \delta_{iN}`` and ``\ell_i(1) = \delta_{i0}``.
+Regardless of the exact form, it is always the case that the endpoints are ``1`` and ``-1`` for polynomial orders bigger than one. We will use the convention that ``x_0 = -1`` and ``x_N = 1`` here, but with Chebyshev extrema one usually takes the opposite ordering. For polynomial order zero we take ``x_0 = 0`` and ``\ell_0 = 1`` in order to reduce back to a finite volume scheme. With this convention and the definition of our Lagrange interpolants, we have ``\ell_i(-1) = \delta_{iN}`` and ``\ell_i(1) = \delta_{i0}``.
 
 With notation and conventions now established, the discrete equations are
 ```math
@@ -100,8 +104,7 @@ With notation and conventions now established, the discrete equations are
     - \mathcal{S}_{ji} \sigma_j
     + \delta_{iN} \sigma^*(1)
     - \delta_{i0} \sigma^*(-1)
-    \\
-    &\text{ } - \delta_{iN} (u \rho)^*(1)
+    - \delta_{iN} (u \rho)^*(1)
     +  
     \delta_{i0} (u \rho)^*(-1)
     \\
@@ -209,13 +212,24 @@ The mass and stiffness matrices are
     \mathcal{S}^T =
     \frac{1}{6}
     \begin{bmatrix}
-     -3  &-4         &  1 \\
+ -3  & -4 &  1 \\
   4  & 0  & -4 \\
- -1   &4         &  3 \\
+ -1  & 4 &  3 \\
     \end{bmatrix}
 \end{aligned}
 ```
-
+In DG_Playgroud we can extract these matrices as follows
+```@repl
+using DG_Playground
+n = 3;
+α = β = 0.0;
+r = jacobiGL(α, β, n);
+D = dmatrix(r, α, β, n);
+V = vandermonde(r, α, β, n);
+Mi = V * V';
+M = inv(Mi)
+S  = (M * D)'
+```
 ### Algebraic Properties of Operators
 We have seen some properties in the previous sections that are particular realizations of more algebraic properties of DG operators. Here we will collect \textbf{three} such algebraic properties.
 
@@ -245,7 +259,7 @@ This follows from
    \mathcal{S}_{ji} + \mathcal{S}_{ij} = \int_{E} \ell_{i}' \ell_j + \int_{E} \ell_j' \ell_i = \int_{\partial E } \ell_j \ell_i = \ell_j(1) \ell_i(1) - \ell_j(-1) \ell_i(-1)
 \end{aligned}
 ```
-via integration by parts, the definition of the Lagrange interpolant, and our convention that ``\ell_i(1) = \delta_{iN}`` and ``\ell_i(-1) = \delta_{i0}``.
+via integration by parts, the definition of the [Lagrange interpolant](https://en.wikipedia.org/wiki/Lagrange_polynomial), and our convention that ``\ell_i(1) = \delta_{iN}`` and ``\ell_i(-1) = \delta_{i0}``.
 
 This last algebraic property follows from the previous
 ```math
