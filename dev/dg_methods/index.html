@@ -30,4 +30,83 @@
     \mathcal{S}_{ji} = \int_{E} \ell_i&#39; \ell_j,
 \end{aligned}\]</div><p>is known as the <em>stiffness matrix</em> a name also borrowed from the finite element community. The flipping of the indices on the entries of <span>$\mathcal{S}$</span> is purposeful and corresponds to how it is ``usually&quot; defined.</p><p>The boundary operators become</p><div>\[\begin{aligned}
     \int_{\partial E } \ell_i \rho^* = \ell_i(1) \rho^*(1) - \ell_i(-1) \rho^*(-1)
-\end{aligned}\]</div><p>and similarly for the other terms. We are abbreviating <span>$\rho^*(x = 1, t)$</span> as <span>$\rho^*(1)$</span> and we will do so for other variables as well. The boundary terms are especially relevant since they play pivotal role in how one formulates boundary conditions.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../convective_adjustment/">Convective Adjustment »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Friday 19 June 2020 23:44">Friday 19 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+\end{aligned}\]</div><p>and similarly for the other terms. We are abbreviating <span>$\rho^*(x = 1, t)$</span> as <span>$\rho^*(1)$</span> and we will do so for other variables as well. The boundary terms play a pivotal role in how one formulates boundary conditions as well as how one couples multiple elements together.</p><h3 id="Discrete-Equations-1"><a class="docs-heading-anchor" href="#Discrete-Equations-1">Discrete Equations</a><a class="docs-heading-anchor-permalink" href="#Discrete-Equations-1" title="Permalink"></a></h3><p>Once we make choices for our functions <span>$\ell_i(x)$</span> we can write a set of discrete equations that represent the Discontinuous Galerkin scheme. We choose the <span>$\ell_i$</span> to be \textbf{Lagrange interpolants} of a set of \textbf{nodal points} <span>$x_j$</span> for <span>$j = 0, ..., N$</span>.  Being a Lagrange interpolant, by definition, means that <span>$\ell_i(x_j) = \delta_{ij}$</span> where <span>$\delta_{ij}$</span> is the \textbf{Kronecker delta}. The nodal points <span>$x_j$</span> are chosen as the \textbf{extrema} of \textbf{Jacobi polynomials}. These points are able to be efficiently calculated with either explicit formulas (as is the case with \textbf{Chebyshev polynomials} where <span>$x_j = \cos(\pi j / N)$</span> for <span>$j = 0, ..., N$</span>) or by solving certain eigenvalue problems, as is the case for \textbf{Legendre polynomials}.</p><p>Regardless of the exact form, it is always the case that the endpoints are <span>$1$</span> and <span>$-1$</span> for polynomial orders bigger than one. We will use the convention that <span>$x_0 = -1$</span> and <span>$x_N = 1$</span> here, but with Chebyshev extrema one usually takes the opposite ordering. For polynomial order zero we take <span>$x_0 = 0$</span> and <span>$\ell_0 = 1$</span> in order to reduce back to a \textbf{finite volume scheme}. With this convention and the definition of our Lagrange interpolants, we have <span>$\ell_i(-1) = \delta_{iN}$</span> and <span>$\ell_i(1) = \delta_{i0}$</span>.</p><p>With notation and conventions now established, the discrete equations are</p><div>\[\begin{aligned}
+    \partial_t \mathcal{M}_{ij} \rho_j - \mathcal{S}_{ji} (u \rho_j) &amp;=
+    - \mathcal{S}_{ji} \sigma_j
+    + \delta_{iN} \sigma^*(1)
+    - \delta_{i0} \sigma^*(-1)
+    \\
+    &amp;\text{ } - \delta_{iN} (u \rho)^*(1)
+    +  
+    \delta_{i0} (u \rho)^*(-1)
+    \\
+    \mathcal{M}_{ij} \sigma_j &amp;= -  \mathcal{S}_{ji}\rho_j
+    + \delta_{iN} \rho^*(1)
+    -
+    \delta_{i0} \rho^*(-1)
+\end{aligned}\]</div><p>We will explicitly calculate the mass and stiffness matrices in the following subsections.</p><h3 id="Explicit-representations-1"><a class="docs-heading-anchor" href="#Explicit-representations-1">Explicit representations</a><a class="docs-heading-anchor-permalink" href="#Explicit-representations-1" title="Permalink"></a></h3><p>For polynomial order zero we can work out all the Lagrange interpolants, extrema points, mass matrices, and stiffness matrices, by hand easily. Firstly, note that the extrema points for polynomial order <span>$N=0$</span> is <span>$x_0 = 0$</span>. Note that here we have <span>$x_0 = x_N$</span> since <span>$N = 0$</span>. The Lagrange interpolants are</p><div>\[\begin{aligned}
+    \ell_0(x) = 1
+\end{aligned}\]</div><p>The mass and stiffness matrices are</p><div>\[\begin{aligned}
+    \mathcal{M}_{00} = [2] \text{ and } \mathcal{S}_{00} = [0]
+\end{aligned}\]</div><p>Thus, polynomial order zero is equivalent to a finite volume scheme.</p><p>For polynomial order one we can work out all the Lagrange interpolants, extrema points, mass matrices, and stiffness matrices, by hand without too much effort. Firstly, note that the extrema points for polynomial order <span>$N=1$</span> is <span>$x_0 = -1$</span> and <span>$x_1 = 1$</span>. The Lagrange interpolants are</p><div>\[\begin{aligned}
+    \ell_0(x) = \frac{x - 1}{-2} \text{ and } \ell_1(x) = \frac{x + 1}{2}
+\end{aligned}\]</div><p>To calculate the entries of the mass matrix, one needs to calculate</p><div>\[\begin{aligned}
+    \mathcal{M}_{ij} = \int_{E} \ell_i \ell_j
+\end{aligned}\]</div><p>i.e.</p><div>\[\begin{aligned}
+    \mathcal{M}_{00} &amp;= \int_{-1}^1 \left(\frac{x - 1}{-2}\right)^2 dx = 2/3 \\
+    \mathcal{M}_{01} &amp;= \int_{-1}^1 \frac{x^2 - 1}{-4} dx = 1/3 .
+\end{aligned}\]</div><p>By symmetry <span>$\mathcal{M}_{00} = \mathcal{M}_{11}$</span> and <span>$\mathcal{M}_{01} = \mathcal{M}_{10}$</span> so</p><div>\[\begin{aligned}
+    \mathcal{M} =
+    \frac{1}{3}\begin{bmatrix}
+    2 &amp; 1 \\
+    1 &amp; 2
+    \end{bmatrix}.
+\end{aligned}\]</div><p>The stiffness matrix is obtained similarly, we must calculate the entries</p><div>\[\begin{aligned}
+    \mathcal{S}_{ji} = \int_{E} \ell_i&#39; \ell_j
+\end{aligned}\]</div><p>so</p><div>\[\begin{aligned}
+    \mathcal{S}^T_{00}  &amp;= \int_{-1}^1 \frac{-1}{2}\left(\frac{x + 1}{2} \right) dx = -1/2
+    \\
+    \mathcal{S}^T_{01}  &amp;= \int_{-1}^1 \frac{-1}{2}\left(\frac{x - 1}{-2} \right) dx = -1/2
+    \\
+    \mathcal{S}^T_{10}  &amp;= \int_{-1}^1 \frac{1}{2}\left(\frac{x - 1}{-2} \right) dx = 1/2
+    \\
+    \mathcal{S}^T_{11}  &amp;= \int_{-1}^1 \frac{1}{2}\left(\frac{x + 1}{2} \right) dx = 1/2
+\end{aligned}\]</div><p>so that</p><div>\[\begin{aligned}
+    \mathcal{S}^T = \frac{1}{2} \begin{bmatrix}
+        -1 &amp; -1 \\
+        1 &amp; 1
+    \end{bmatrix}.
+\end{aligned}\]</div><p>Unlike polynomial order zero and finite volume schemes, all non-zero polynomial order DG discretizations have a non-zero stiffness matrix. Non-zero stiffness matrices play an important role in the determining the stability of the numerical discretization and adds extra complications that do not present themselves in the finite volume case.</p><p>Luckily this has been automated for any polynomial order, so we just display the results polynomial order two here. The extrema points are <span>$x_0 = -1$</span>, <span>$x_1 = 0$</span>, <span>$x_2 = 1$</span>. The Lagrange interpolants are</p><div>\[\begin{aligned}
+    \ell_0(x) = x(x-1)/2
+    \text{ , }
+    \ell_1(x) = -(x+1)(x-1)
+    \text{ , and }
+    \ell_2(x) = x(x+1) / 2
+\end{aligned}\]</div><p>The mass and stiffness matrices are</p><div>\[\begin{aligned}
+    \mathcal{M} = \frac{1}{15}
+    \begin{bmatrix}
+      4  &amp; 2 &amp; -1 \\
+  2  &amp; 16  &amp;  2 \\
+ -1 &amp;  2 &amp;  4
+    \end{bmatrix}
+    \text{ and }
+    \mathcal{S}^T =
+    \frac{1}{6}
+    \begin{bmatrix}
+     -3  &amp;-4         &amp;  1 \\
+  4  &amp; 0  &amp; -4 \\
+ -1   &amp;4         &amp;  3 \\
+    \end{bmatrix}
+\end{aligned}\]</div><h3 id="Algebraic-Properties-of-Operators-1"><a class="docs-heading-anchor" href="#Algebraic-Properties-of-Operators-1">Algebraic Properties of Operators</a><a class="docs-heading-anchor-permalink" href="#Algebraic-Properties-of-Operators-1" title="Permalink"></a></h3><p>We have seen some properties in the previous sections that are particular realizations of more algebraic properties of DG operators. Here we will collect \textbf{three} such algebraic properties.</p><p>The first is that</p><div>\[\begin{aligned}
+    \int_{E} \rho^2 = \rho_i \mathcal{M}_{ij} \rho_j
+\end{aligned}\]</div><p>The proof is a one liner since <span>$\rho = \rho_i \ell_i$</span> and <span>$\int_{E}  (\ell_i \ell_j ) = \mathcal{M}_{ij}$</span>. The calculation is as follows</p><div>\[\begin{aligned}
+  \int_{E} \rho^2  = \int_{E} (\rho_i \ell_i) (\rho_j \ell_j ) =  \rho_i \int_{E}  (\ell_i \ell_j ) \rho_j = \rho_i \mathcal{M}_{ij} \rho_j.
+\end{aligned}\]</div><p>Furthermore, observe that that the mass matrix is symmetric, i.e., <span>$\mathcal{M}_{ij} = \mathcal{M}_{ji}$</span>.</p><p>The next property is the \textbf{discrete integration by parts} formula</p><div>\[\begin{aligned}
+    \mathcal{S}_{ji} + \mathcal{S}_{ij} = \delta_{iN}\delta_{jN} - \delta_{i0}\delta_{j1}
+\end{aligned}\]</div><p>This follows from</p><div>\[\begin{aligned}
+   \mathcal{S}_{ji} + \mathcal{S}_{ij} = \int_{E} \ell_{i}&#39; \ell_j + \int_{E} \ell_j&#39; \ell_i = \int_{\partial E } \ell_j \ell_i = \ell_j(1) \ell_i(1) - \ell_j(-1) \ell_i(-1)
+\end{aligned}\]</div><p>via integration by parts, the definition of the Lagrange interpolant, and our convention that <span>$\ell_i(1) = \delta_{iN}$</span> and <span>$\ell_i(-1) = \delta_{i0}$</span>.</p><p>This last algebraic property follows from the previous</p><div>\[\begin{aligned}
+    \rho_i \mathcal{S}_{ji} \rho_j = \frac{1}{2} \left[ (\rho_N)^2 - (\rho_0)^2 \right]
+\end{aligned}\]</div><p>To see this write</p><div>\[\begin{aligned}
+    \mathcal{S}_{ji} = \frac{1}{2}\left(\mathcal{S}_{ji} + \mathcal{S}_{ij} \right) + \frac{1}{2}\left(\mathcal{S}_{ji} - \mathcal{S}_{ij} \right)
+\end{aligned}\]</div><p>and use the fact that the anti-symmetric component vanishes <span>$\rho_i\left(\mathcal{S}_{ji} - \mathcal{S}_{ij} \right) \rho_j = 0$</span></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../convective_adjustment/">Convective Adjustment »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Saturday 20 June 2020 00:01">Saturday 20 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
