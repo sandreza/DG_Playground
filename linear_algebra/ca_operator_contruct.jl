@@ -1,6 +1,5 @@
 using DG_Playground, LinearAlgebra, SparseArrays, Plots
 
-
 """
 ca_operator_constructor(h, Δt, κ¹, κ², L, K, n; μ = 1.0)
 
@@ -103,7 +102,6 @@ function ca_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0)
     return L, κ
 end
 
-
 ###
 (γ, κ¹, κ², L, K, n) = (1.0, 10.0, 1.0, 1.0, 10, 3)
 simple_operator_constructor(h) = ca_operator_constructor(h, γ, κ¹, κ², L, K, n, μ = 0.0)
@@ -119,13 +117,16 @@ for v in 0:vector_space_size+1
    @eval $Llabel, $κlabel  = simple_operator_constructor($v / vector_space_size)
    @eval push!(all_operators, $Llabel)
 end
+
 ###
+
 distances = zeros(vector_space_size + 2 , vector_space_size + 2)
 for i in eachindex(all_operators)
     for j in eachindex(all_operators)
-        distances[i,j] = norm(all_operators[i]-all_operators[j])
+        distances[i, j] = norm(all_operators[i]-all_operators[j])
     end
 end
+
 ###
 theme(:juno)
 spy(sparse(L2))

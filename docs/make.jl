@@ -5,6 +5,8 @@ using DG_Playground
 dg_methods = Any[
     "Home" => "dg_methods.md",
     "Single Element" => "dg_single_element.md",
+    "Boundary Conditions" => "boundary_conditions.md",
+    "Variational Crimes" => "inexact_quadrature.md"
 ]
 
 physics = Any[

@@ -1,14 +1,22 @@
-# Single Element 
+# [Single Element](@id sec:single_element)
 
 Our goal will be to understand the Discontinuous Galerkin (DG) discretization for a single element.  We will use this to illustrate the role of boundary fluxes but also to understand differences with finite volume codes.
 To better illustrate the discrete implementation of the weak formulation of the conservation equation, we consider the advection-diffusion equation
 ```math
 \begin{aligned}
-    \partial_t \rho + \partial_x \left( u \rho \right) &= \partial_x \sigma \\
+    \partial_t \rho + \partial_x \left( u \rho \right) &= \partial_x \sigma
+    \\
     \sigma &= \partial_x \rho
 \end{aligned}
 ```
-where ``u \in \mathbb{R}``, the domain is ``x \in (-1,  1) \equiv E``, and ``\rho(x,t)`` and/or ``\sigma(x,t)`` satisfies some prescribed boundary conditions.
+where ``u \in \mathbb{R}``, the domain is ``x \in (-1,  1) \equiv E``, and ``\rho(x,t)`` and/or ``\sigma(x,t)`` satisfies some prescribed boundary conditions. The boundary of the domain is denoted by ``\{ -1, 1\} \equiv \partial E``. We will use the following abbreviations for integrals
+```math
+\begin{aligned}
+    \int_E f &\equiv \int_{x = -1}^{x = 1} f(x) dx
+    \text{ and } \text{ }
+    \int_{\partial E} f \equiv f(1) - f(-1)
+\end{aligned}
+```
 
 ## Weak Form
 
@@ -42,7 +50,7 @@ In DG we approximate the spatial structure of our functions ``\rho(x,t)`` and ``
     \rho(x,t) = \rho_i(t) \ell_i(x) \text{ and } \sigma(x,t) = \sigma_i(t) \ell_i(x)
 \end{aligned}
 ```
-where we are using Einstein summation convention for repeated indices. To reduce notational clutter we will occasionally suppress the ``x``-dependence and ``t``-dependence in the following manner
+where we are using [Einstein summation convention](https://en.wikipedia.org/wiki/Einstein_notation) for repeated indices. To reduce notational clutter we will occasionally suppress the ``x``-dependence and ``t``-dependence in the following manner
 ```math
 \begin{aligned}
     \rho = \rho_i \ell_i \text{ and } \sigma = \sigma_i \ell_i.
@@ -244,7 +252,7 @@ Furthermore, observe that that the mass matrix is symmetric, i.e., ``\mathcal{M}
 The next property is the *discrete integration by parts* formula
 ```math
 \begin{aligned}
-    \mathcal{S}_{ji} + \mathcal{S}_{ij} = \delta_{iN}\delta_{jN} - \delta_{i0}\delta_{j1}
+    \mathcal{S}_{ji} + \mathcal{S}_{ij} = \delta_{iN}\delta_{jN} - \delta_{i0}\delta_{j0}
 \end{aligned}
 ```
 This follows from
