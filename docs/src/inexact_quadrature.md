@@ -1,4 +1,4 @@
-# [Variational Crimes](@doc sec:variational_crimes)
+# [Variational Crimes](@id sec:variational_crimes)
 
 We will use the same notation as [Single Element](@ref sec:single_element). The other thing that makes DG different from finite volume is [aliasing](https://en.wikipedia.org/wiki/Aliasing) issues.
 Consider Burgers' equation, which is the nonlinear PDE
