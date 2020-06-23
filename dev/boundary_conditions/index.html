@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Boundary Conditions · DG_Playground</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">DG_Playground</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox" checked/><label class="tocitem" for="menuitem-2"><span class="docs-label">Discontinuous Galerkin</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../dg_methods/">Home</a></li><li><a class="tocitem" href="../dg_single_element/">Single Element</a></li><li class="is-active"><a class="tocitem" href>Boundary Conditions</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#sec:advection_bc-1"><span>Boundary Conditions for the Advection Equation</span></a></li><li class="toplevel"><a class="tocitem" href="#Boundary-Conditions-for-the-Diffusion-Equation-1"><span>Boundary Conditions for the Diffusion Equation</span></a></li><li class="toplevel"><a class="tocitem" href="#Boundary-Conditions-for-the-Advection-Diffusion-Equation-1"><span>Boundary Conditions for the Advection-Diffusion Equation</span></a></li><li class="toplevel"><a class="tocitem" href="#Brief-Discussion-on-Robin-Boundary-Conditions-/-Relaxation-Boundary-Conditions-1"><span>Brief Discussion on Robin Boundary Conditions / Relaxation Boundary Conditions</span></a></li></ul></li><li><a class="tocitem" href="../inexact_quadrature/">Variational Crimes</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Physics</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../physics/">Home</a></li><li><a class="tocitem" href="../convective_adjustment/">Convective Adjustment</a></li></ul></li><li><a class="tocitem" href="../function_index/">Function Index</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Discontinuous Galerkin</a></li><li class="is-active"><a href>Boundary Conditions</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Boundary Conditions</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/sandreza/DG_Playground/blob/master/docs/src/boundary_conditions.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="sec:se_bc-1"><a class="docs-heading-anchor" href="#sec:se_bc-1">Boundary Conditions</a><a class="docs-heading-anchor-permalink" href="#sec:se_bc-1" title="Permalink"></a></h1><p>For the study of boundary conditions it suffices to consider a single element.</p><h1 id="sec:advection_bc-1"><a class="docs-heading-anchor" href="#sec:advection_bc-1">Boundary Conditions for the Advection Equation</a><a class="docs-heading-anchor-permalink" href="#sec:advection_bc-1" title="Permalink"></a></h1><p>First consider the case where we only have advection with wavespeed <span>$u$</span> so that the continuous equations are</p><div>\[\begin{aligned}
+\partial_t \rho + \partial_x (u\rho) &amp;= 0
+\end{aligned}\]</div><p>and the discrete equations are</p><div>\[\begin{aligned}
+    \partial_t \mathcal{M}_{ij} \rho_j -  \mathcal{S}_{ji} (u \rho_j) &amp;=
+    - \delta_{iN} (u\rho)^*(1)
+    +
+     \delta_{i0}(u\rho)^*(-1)
+\end{aligned}\]</div><p>How do we enforce boundary conditions in this setting? We have only one spatial derivative, thus we must make a choice on which boundary to place boundary conditions. Since the wavespeed is positive, the flow of information is from left to right, hence it well posed to impose boundary conditions on the left end of the domain <span>$\rho(x=-1, t)$</span>, but not on the right endpoint <span>$\rho(x = 1, t)$</span>. (Information can&#39;t flow upstream.)</p><p>Philosophically we can take a few viewpoints on enforcing a boundary conditions such as</p><div>\[\begin{aligned}
+\rho(x=-1, t) = \rho_L
+\end{aligned}\]</div><p>for some <span>$\rho_L \in \mathbb{R}$</span> (here <span>$L$</span> stands for left). Mathematically we would like to determine the flux on the boundary</p><div>\[\begin{aligned}
+    (u\rho)^*(-1,t) = F( \rho_0, \rho_L)
+\end{aligned}\]</div><p>in a manner that is consistent with the boundary conditions. One option is to the think of the domain as extending beyond the left endpoint <span>$x  = -1$</span> and <span>$\rho$</span> having the value of <span>$\rho_L$</span> from the left onwards. This is equivalent to introducing a <strong>ghost-point</strong> <span>$\rho^+(-1,t) = \rho_L$</span>. The superscript <span>$+$</span> notation is typical for ghost-points or points <strong>exterior</strong> to our element. The points in the interior of the element are typically denoted with a superscript <span>$-$</span> such as <span>$\rho^-$</span>. Our estimate of the flux can then be taken as an average of the flux calculated with the ghost point and and the flux calculated at the interior of our domain. This is known as a <strong>central boundary flux</strong> as is given by the formula</p><div>\[\begin{aligned}
+(u\rho)^*(-1) = \frac{u\rho^-(-1) + u\rho^+(-1)}{2}.
+\end{aligned}\]</div><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>It is not always the case that one uses a central flux on the boundary.</p></div></div><p>One <strong>option</strong> is to choose the ghost point to be the value of the solution to the left of the domain, i.e., <span>$\rho^+(-1) = \rho_L$</span>, to get</p><div>\[\begin{aligned}
+(u\rho)^*(-1) = \frac{u\rho^-(-1) + u\rho^+(-1)}{2} = \frac{u \rho_0 + u \rho_L}{2}
+\end{aligned}\]</div><p>where we use a central flux to estimate the flux on the boundary. It is possible to use other types of fluxes, such as upwind or Rusanov.</p><p>Alternatively, we can state that we know what the flux should be on the boundary exactly, it should just be <span>$u \rho_L$</span>, this leads to <strong>option 2</strong></p><div>\[\begin{aligned}
+(u\rho)^*(-1) = u \rho_L
+\end{aligned}\]</div><p>In terms of our ghost point this mean that we selected <span>$\rho^+(-1,t) = - \rho^-(-1,t) + 2 \rho_L$</span>, known as the <strong>reflection principle</strong>. This choice of ghost point essentially converts a <strong>central boundary flux</strong> into an <strong>inflow boundary flux</strong>.</p><p>Regardless of the exact choice of ghost-point, all of them must satisfy a <strong>consistency condition</strong>. If <span>$\rho^+ = \rho^- = \text{boundary condition}$</span>, then the equation must be consistent. For example, the following ghost point is <strong>not consistent</strong> for all possible <span>$\rho_L$</span></p><div>\[\begin{aligned}
+    \rho^+(-1,t) = - \rho^-(-1,t) +  \rho_L
+\end{aligned}\]</div><p>since</p><div>\[\begin{aligned}
+    \rho_L = - \rho_L +  \rho_L = 0
+\end{aligned}\]</div><p>which is true for <span>$\rho_L = 0$</span>, but not true for any other <span>$\rho_L$</span>.</p><p>We will address which of these ghost-point conditions to take shortly, but first let us discuss the right endpoint <span>$x = 1$</span>. What do we do for the right endpoint? After all we cannot impose any more boundary conditions, and yet we see that we still have this <span>$(u\rho^*)(1)$</span> dangling around. We cannot just set it equal to zero, since this is effectively just introducing another boundary condition, as well as being unphysical. The only option that we have is to leave it as a free endpoint given that we cannot impose anything. We do this through the use of a <strong>transmissive boundary flux</strong>, in this case</p><div>\[\begin{aligned}
+    (u \rho)^*(1) = u \rho^-(x = 1) = u \rho_N
+\end{aligned}\]</div><p>In terms of our ghost point, this means that we take <span>$\rho^+(1,t) = \rho^-(1,t) = \rho_N(t)$</span>. This is how we let the boundary be &quot;free&quot;. The endpoint &quot;just is what it is&quot;.</p><p>After our brief detour on the right endpoint we are now ready to discuss the choice of fluxes on the left endpoint. In practice, to be perfectly frank, either are okay. The difference between the two boundary conditions is that one wiggles around the boundary condition (option 1) and the other enforces the boundary without wiggling around it (option 2), but both are stable with RK4. This freedom of choice, given to us by DG, is both dangerous and powerful. There are a few criteria that one can use to prune amongst all possible choices and they often revolve around either conservation arguments, physics, or energy arguments. Here &quot;energy&quot; does not mean kinetic or potential energy, but rather arguments that rely on <a href="https://en.wikipedia.org/wiki/Lyapunov_function">Lyapunov functions</a> to bound solutions to within some region in phase space. Often times quadratic Lyapunov functions are called energy.</p><p>Let us first look at the energy argument. For constant in time <span>$\rho_L$</span>, it suffices to consider the <strong>energy argument</strong> with <span>$\rho_L = 0$</span> since we can just shift our solution <span>$\rho \rightarrow \rho - \rho_L$</span> without changing the underlying equation. The energy argument yields the following (just multiplying through by <span>$\rho_i$</span> and utilizing the algebraic properties of the operators)</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t (\rho_i \mathcal{M}_{ij} \rho_j) = \rho_N \left(\frac{u}{2}\rho_N - (u \rho)^*(1) \right) + \rho_0 \left( (u \rho)^*(-1) - \frac{u}{2} \rho_0 \right)
+\end{aligned}\]</div><p>Our choices of numerical fluxes yields</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t (\rho_i \mathcal{M}_{ij} \rho_j)  &amp;= - \frac{u}{2}\rho_N^2  + \frac{u}{2} \rho_0   \rho_L
+    \\
+    &amp;=  - \frac{u}{2}\rho_N^2
+\end{aligned}\]</div><p>for option 1 and</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t (\rho_i \mathcal{M}_{ij} \rho_j)  &amp;= - \frac{u}{2}\rho_N^2  +  u \rho_0 \left( \rho_L - \frac{1}{2} \rho_0 \right)
+    \\
+    &amp;= -\frac{u}{2}\left(\rho_N^2 + \rho_0^2 \right) + u \rho_0 \rho_L
+    \\
+    &amp;= -\frac{u}{2}\left(\rho_N^2 + \rho_0^2 \right)
+\end{aligned}\]</div><p>for option 2. From this we can see that option 2 is the more stable one since it adds more dissipation. If instead we had made the choice <span>$\rho^+(-1) = - \alpha \rho_0 + (1+\alpha)\rho_L$</span>, (where <span>$\alpha = 1$</span> corresponds to the second option and <span>$\alpha = 0$</span> corresponds to the first option) we would get</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t (\rho_i \mathcal{M}_{ij} \rho_j) &amp;= - \frac{u}{2}\rho_N^2  +  u \rho_0 \left( \frac{1+\alpha}{2}\rho_L - \frac{\alpha}{2} \rho_0 \right)
+    \\
+    &amp;= -\frac{u}{2}\left(\rho_N^2 + \alpha \rho_0^2 \right) + u \frac{1+ \alpha}{2} \rho_0 \rho_L
+    \\
+    &amp;= -\frac{u}{2}\left(\rho_N^2 + \alpha \rho_0^2 \right)
+\end{aligned}\]</div><p>which is okay most choices of <span>$\alpha \geq 0$</span>.</p><p>In the original PDE we can go through the energy argument as well. Multiplying through by <span>$\rho$</span> and integrating over the domain, we have (with <span>$\rho(-1) = 0$</span>)</p><div>\[\begin{aligned}
+\partial_t \frac{1}{2} \int_E \rho^2  &amp;= - \frac{u}{2} \int_E \partial_x\left( \rho^2 \right)
+= - \frac{u}{2} \rho^2(1).
+\end{aligned}\]</div><p>This is somewhat suggestive of choosing <span>$\alpha = 0$</span>. The reason why it is not exact is due to the fact that the discrete equations are different than the continuous ones, hence one cannot necessarily correspond the continuous <span>$\rho(1)$</span> with the discrete <span>$\rho_N$</span>. Furthermore, if we look at the discrete conservation property of <span>$\rho$</span>, i.e. we integrate over the domain we get</p><div>\[\begin{aligned}
+\partial_t \int_E \rho &amp;= - u \rho(1)
+\end{aligned}\]</div><p>on the PDE level and</p><div>\[\begin{aligned}
+ \partial_t  \int_E \rho  &amp;= (u \rho)^*(-1) - (u \rho)^*(1) = u (1-\alpha)\frac{\rho_0}{2} - u \rho_N
+\end{aligned}\]</div><p>on the discretized level. The other equation is instead suggestive of choosing <span>$\alpha = 1$</span> to make the discrete approximation look like the continuous one.</p><p>This just shows that sometimes imposing a particular kind of flux can place different principles at odds with one another. That is to say, using <span>$\alpha = 1$</span> respects the algebraic structure our conservation budget, but makes the discrete energy dissipation rate algebraically different, whereas <span>$\alpha = 0$</span> makes the discrete energy dissipation rate algebraically similar, but does not respect the conservation budget in the same way.</p><h1 id="Boundary-Conditions-for-the-Diffusion-Equation-1"><a class="docs-heading-anchor" href="#Boundary-Conditions-for-the-Diffusion-Equation-1">Boundary Conditions for the Diffusion Equation</a><a class="docs-heading-anchor-permalink" href="#Boundary-Conditions-for-the-Diffusion-Equation-1" title="Permalink"></a></h1><p>Let us now consider the diffusion equation,</p><div>\[\begin{aligned}
+    \partial_t \rho &amp;= \partial_x \sigma \\
+    \sigma &amp;= \partial_x \rho
+\end{aligned}\]</div><p>and its discrete form</p><div>\[\begin{aligned}
+    \partial_t \mathcal{M}_{ij} \rho_j &amp;=
+    - \mathcal{S}_{ji}\sigma_{j}
+    + \delta_{iN} \sigma^*(1)
+    - \delta_{i0} \sigma^*(-1)
+    \\
+    \mathcal{M}_{ij} \sigma_j &amp;= -  \mathcal{S}_{ji} \rho_j
+    + \delta_{iN}\rho^*(1)
+    -
+    \delta_{i0} \rho^*(-1)
+\end{aligned}\]</div><p>To see how we enforce <a href="https://en.wikipedia.org/wiki/Dirichlet_boundary_condition">Dirichlet boundary conditions</a> and <a href="https://en.wikipedia.org/wiki/Neumann_boundary_condition">Neumann Boundary conditions</a>.</p><p>Let us first do <strong>Neumann boundary conditions</strong>. Because we are using a first-order formulation Neumann boundary conditions for <span>$\rho$</span> means that we are imposing Dirichlet boundary conditions on <span>$\sigma$</span>. Similar to the last section this means that the fluxes <span>$\rho^*(1)$</span> and <span>$\rho^*(-1)$</span> are free to be whatever they are on the boundary. Thus we choose <strong>transmissive boundary fluxes</strong> for <span>$\rho^*$</span> , i.e.</p><div>\[\begin{aligned}
+    \rho^*(1) = \rho_N \text{ and } \rho^*(-1) = \rho_0
+\end{aligned}\]</div><p>For <span>$\sigma$</span> we have to determine the numerical fluxes <span>$\sigma^*(-1)$</span> and <span>$\sigma^*(1)$</span>, which will depend on <span>$\sigma_0$</span>, <span>$\sigma_N$</span>, as well as the boundary condition at the given endpoint. For this let us suppose that we want to enforce <span>$\sigma(-1,t) = \sigma_L$</span> and <span>$\sigma(1, t) = \sigma_R$</span>. Then, just like in the previous section, we have a few choices that can be made with regards to how we determine the numerical flux. Upon introduction of a ghost-point and the use of a <strong>central boundary flux</strong>, we take</p><div>\[\begin{aligned}
+\sigma^* = \frac{\sigma^- + \sigma^+}{2}
+\end{aligned}\]</div><p>Enforcing the boundary condition <span>$\sigma^*(-1) = \sigma_L$</span> or <span>$\sigma^*(1) = \sigma_R$</span> means that, with the reflection principle, we use ghost points</p><div>\[\begin{aligned}
+    \sigma^+(-1) = - \sigma_0 + 2 \sigma_L
+\end{aligned}\]</div><p>and similarly for the right endpoint. As we have done with the advection example, we can philosophize about what it means to be on the boundary and take <span>$\sigma^+(-1)  = \sigma_L$</span> and <span>$\sigma^+(1) = \sigma_R$</span> and take</p><div>\[\begin{aligned}
+    \sigma^*(1) = (\sigma_N + \sigma_R)/2
+\end{aligned}\]</div><p>(similarly for the left endpoint). Or we could be more flexible and interpolate between the two with the introduction of the parameter <span>$\alpha$</span>, to get</p><div>\[\begin{aligned}
+    \sigma^+ = - \alpha \sigma^- +  (1+\alpha)\sigma^{\text{bc}}.
+\end{aligned}\]</div><p>We could enforce the different endpoints differently and make one choice on one boundary and a different choice on the other.</p><p>Let us go through the budget argument and the energy argument just as before. For simplicity we will choose <span>$\sigma_L = \sigma_R = 0$</span>. In the budget argument, choosing <span>$\alpha = 1$</span>, aka, making the flux on the boundary the flux we know that it <em>should be</em> yields a discrete scheme with exactly the same <strong>conservation property</strong>. To see this, first note that the discrete budget for <span>$\rho$</span> is</p><div>\[\begin{aligned}
+    \partial_t \int_{E} \rho &amp;= \sigma^*(1) - \sigma^*(-1) = (1-\alpha_{-1})\frac{\sigma_N}{2} - (1-\alpha_{+1})\frac{\sigma_0}{2}
+\end{aligned}\]</div><p>For the PDE this is</p><div>\[\begin{aligned}
+\partial_t \int_{E} \rho &amp;= \sigma(1) - \sigma(-1) = 0
+\end{aligned}\]</div><p>We can also look towards the energy argument for some guidance. In the PDE we get</p><div>\[\begin{aligned}
+    \partial_t \int_E \rho^2 &amp;= - \int_E \sigma^2 + \rho(1) \sigma(1) - \rho(-1) \sigma(-1) \\
+    &amp;= - \int_E \sigma^2 + 0
+\end{aligned}\]</div><p>The discrete equations are</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t \rho_i \mathcal{M}_{ij} \rho_j &amp;= - \rho_i \mathcal{S}_{ji} \sigma_j + \rho_N \sigma^*(1) - \rho_0 \sigma^*(-1) \\
+    \sigma_i \mathcal{M}_{ij} \sigma_j &amp;= - \sigma_i \mathcal{S}_{ji} \rho_j + \sigma_N \rho^*(1) - \sigma_0 \rho^*(-1)
+\end{aligned}\]</div><p>We use the discrete integration by parts formula,</p><div>\[\begin{aligned}
+\rho_i \mathcal{S}_{ji} \sigma_j = \sigma_i \mathcal{S}_{ij} \rho_j =  \sigma_i (\mathcal{S}_{ij} +\mathcal{S}_{ji} - \mathcal{S}_{ji} ) \rho_j  = \rho_N \sigma_N - \rho_0 \sigma_0 - \sigma_i \mathcal{S}_{ji} \rho_j
+\end{aligned}\]</div><p>to place everything in one equation. (We used the algebraic property of <span>$\mathcal{S}_{ij}+\mathcal{S}_{ji}$</span> in the derivation.) The second equation, becomes</p><div>\[\begin{aligned}
+- \rho_i \mathcal{S}_{ji} \sigma_j &amp;=
+- \sigma_i \mathcal{M}_{ij} \sigma_j  + \sigma_N (\rho^*(1) - \rho_N) - \sigma_0 (\rho^*(-1) - \rho_N)
+\end{aligned}\]</div><p>Thus in the discrete equation we have</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t \rho_i \mathcal{M}_{ij} \rho_j &amp;= -\sigma_i \mathcal{M}_{ij} \sigma_j + \sigma_N (\rho^*(1) - \rho_N) - \sigma_0 (\rho^*(-1) - \rho_N)
+    \\
+    &amp;+ \rho_N \sigma^*(1) - \rho_0 \sigma^*(-1)
+\end{aligned}\]</div><p>In this case we see that <span>$\rho^* = \rho^-$</span>, i.e., <span>$\rho^*(1,t) = \rho_N$</span> and <span>$\rho^*(-1,t) = \rho_0$</span> as well as <span>$\sigma^* = 0$</span> yields a structure that is algebraically similar to the PDE. Thus in the case of the diffusion equation we see that there seems to be a ``best&quot; choice of boundary fluxes.</p><p>For <strong>Dirichlet boundary conditions</strong> much is the same. Here the roles of <span>$\sigma$</span> and <span>$\rho$</span> switch places, and we &quot;impose&quot; transmissive flux conditions for <span>$\sigma$</span> and the different variations of boundary conditions for <span>$\rho$</span>. The balance budget and energy will mimic the behavior of the PDE if we choose <span>$\rho^* = \rho^\text{bc}$</span>.</p><h1 id="Boundary-Conditions-for-the-Advection-Diffusion-Equation-1"><a class="docs-heading-anchor" href="#Boundary-Conditions-for-the-Advection-Diffusion-Equation-1">Boundary Conditions for the Advection-Diffusion Equation</a><a class="docs-heading-anchor-permalink" href="#Boundary-Conditions-for-the-Advection-Diffusion-Equation-1" title="Permalink"></a></h1><p>The PDE is</p><div>\[\begin{aligned}
+    \partial_t \rho + \partial_x (u \rho) &amp;= \partial_x \sigma \\
+    \sigma &amp;= \partial_x \rho
+\end{aligned}\]</div><p>and the discrete form is</p><div>\[\begin{aligned}
+    \partial_t \mathcal{M}_{ij} \rho_j - \mathcal{S}_{ji} (u \rho_j) &amp;=
+    - \mathcal{S}_{ji} \sigma_j
+    + \delta_{iN} \sigma^*(1)
+    - \delta_{i0} \sigma^*(-1)
+    \\
+    &amp;\text{ } - \delta_{iN} (u \rho)^*(1)
+    +
+    \delta_{i0} (u \rho)^*(-1)
+    \\
+    \mathcal{M}_{ij} \sigma_j &amp;= -  \mathcal{S}_{ji}\rho_j
+    + \delta_{iN} \rho^*(1)
+    -
+    \delta_{i0} \rho^*(-1)
+\end{aligned}\]</div><p>Before discussing boundary conditions let us look at the budgets and energy argument. Integrating the PDE over the domain yields</p><div>\[\begin{aligned}
+    \partial_t \int_E \rho
+    &amp;= -u \rho(1) + u \rho(-1) +  \sigma(1) - \sigma(-1)
+    \\
+    \int_E \sigma &amp;= \rho(1) - \rho(-1)
+\end{aligned}\]</div><p>The discrete budget is</p><div>\[\begin{aligned}
+    \partial_t \int_E \rho
+    &amp;= -(u \rho)^*(1) + (u \rho)^*(-1) +  \sigma^*(1) - \sigma^*(-1)
+    \\
+    \int_E \sigma &amp;= \rho^*(1) - \rho^*(-1)
+\end{aligned}\]</div><p>The energy argument (multiplying through by <span>$\rho$</span>, integrating over the domain, and performing sufficient integration by parts) for the PDE yields</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t \rho^2 &amp;= - \int_E \sigma^2 - \frac{u}{2}\left( \rho(1)^2 - \rho(-1)^2  \right)
+    + \rho(1) \sigma(1) - \rho(-1) \sigma(-1)
+    \\
+    \int_E \sigma^2 &amp;= \int_E \sigma \partial_x \rho
+\end{aligned}\]</div><p>The discrete energy argument yields</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t \rho_i \mathcal{M}_{ij} \rho_j &amp;= - \sigma_i \mathcal{M}_{ij} \sigma_j
+    \\
+    &amp;+ \rho_N \left(\frac{u}{2}\rho_N - (u \rho)^*(1) \right) - \rho_0 \left(\frac{u}{2} \rho_0   - (u \rho)^*(-1) \right)
+    \\
+    &amp;+ \rho_N \sigma^*(1) - \rho_0 \sigma^*(-1)
+    \\
+    &amp;+ \sigma_N ( \rho^*(1) - \rho_N) - \sigma_0 \left( \rho^*(-1) - \rho_0 \right)
+    \\
+    \sigma_i \mathcal{M}_{ij} \sigma_j &amp;= - \sigma_i \mathcal{S}_{ji} \rho_j     + \sigma_N \rho^*(1)
+    -
+    \sigma_0 \rho^*(-1)
+\end{aligned}\]</div><p>Now let us talk about Dirichlet boundary conditions on this system, and specifically <span>$\rho(1) = \rho(-1) = 0$</span>. Comparing the equations, we see that to mimic the algebraic structure of the budget, we must choose <span>$(u\rho)^* = \rho^* = 0$</span> and <span>$\sigma^* = \sigma^-$</span>. This is because the PDE budget is</p><div>\[\begin{aligned}
+    \partial_t \int_E \rho
+    &amp;= -0 + 0 +  \sigma(1) - \sigma(-1)
+    \\
+    \int_E \sigma &amp;= 0 - 0
+\end{aligned}\]</div><p>and each term in the discrete budget must be zero where the PDE budget is zero. The only terms that are non-zero are the <span>$\sigma$</span> terms, which are free to be whatever they want to be since they don&#39;t have any boundary conditions.</p><p>However, comparing the PDE energy becomes</p><div>\[\begin{aligned}
+    \frac{1}{2} \partial_t \rho^2 &amp;= - \int_E \sigma^2
+    \\
+    \int_E \sigma^2 &amp;= \int_E \sigma \partial_x \rho = - \int_E (\partial_x \sigma) \rho
+\end{aligned}\]</div><p>thus we must choose,</p><div>\[\begin{aligned}
+(u\rho)^* = \frac{u \rho^- + 0}{2} \text{ , } \rho^* = 0 \text{, and } \sigma^* = \sigma^-
+\end{aligned}\]</div><p>In the advective flux case where are taking a central flux between what we see in the interior to the domain and what we see exterior, whereas in the terms associated with the diffusive flux we are simply setting the value of <span>$\rho^*$</span> to what it should be on the boundary. We remind the reader that <span>$(u\rho)^* = \frac{u \rho^- + 0}{2}$</span> is an abbreviation for the simultaneous prescription <span>$(u\rho)^*(1) = u \rho_N/2$</span> and <span>$(u\rho)^*(-1) = u \rho_0 /2$</span>. In order to algebraically replicate the energy budget of the PDE. One point in favor of the energy argument is that it leads to a  numerically stable algorithm whereas in the budget case one has to hope that the dissipation is enough to make things not get too out of control.</p><p>Homogeneous Neumann boundary conditions for the present problem does not make too much sense, since one is just shoving material against the right wall and not letting it escape.</p><h1 id="Brief-Discussion-on-Robin-Boundary-Conditions-/-Relaxation-Boundary-Conditions-1"><a class="docs-heading-anchor" href="#Brief-Discussion-on-Robin-Boundary-Conditions-/-Relaxation-Boundary-Conditions-1">Brief Discussion on Robin Boundary Conditions / Relaxation Boundary Conditions</a><a class="docs-heading-anchor-permalink" href="#Brief-Discussion-on-Robin-Boundary-Conditions-/-Relaxation-Boundary-Conditions-1" title="Permalink"></a></h1><p><a href="https://en.wikipedia.org/wiki/Robin_boundary_condition">Robin boundary conditions</a> are boundary conditions of the form</p><div>\[\begin{aligned}
+    \alpha \rho(1) + \beta \sigma(1) = \gamma
+\end{aligned}\]</div><p>or similarly for the left endpoint. This kind of boundary condition comes up in the CLIMA Ocean code, when one has a relaxation to a surface temperature. In that context the boundary condition is</p><div>\[\begin{aligned}
+   \left. \kappa \partial_z T \right|_\text{surface} = \lambda \left( \left. T \right|_\text{surface} - T_0 \right)
+\end{aligned}\]</div><p>where <span>$T_0$</span> is some prescribed temperature field.</p><p>The difficulty in enforcing this kind of boundary condition through numerical fluxes comes from interpreting what is &quot;transmissive&quot; and what isn&#39;t. In the particular cases of Dirichlet or Neumann boundary conditions, it was clear that the variable without boundary conditions is the one that needs transmissive fluxes; however here the boundary condition is a linear combination of Dirichlet and Neumann.</p><p>Let us focus on potential ways to enforce this boundary condition. One way is to interpret the equation as meaning</p><div>\[\begin{aligned}
+    \alpha \rho^*(1) + \beta \sigma^*(1) = \gamma.
+\end{aligned}\]</div><p>Given that robin boundary conditions involve a linear combination of <span>$\rho$</span> and <span>$\sigma$</span>, this is suggestive of making the transmissive flux a linear combination of <span>$\rho$</span> and <span>$\sigma$</span> as well. Thus, we will explore options of the form</p><div>\[\begin{aligned}
+\begin{bmatrix}
+\alpha &amp; \beta \\
+c &amp; d
+\end{bmatrix}
+\begin{bmatrix}
+\rho^* \\
+\sigma^*
+\end{bmatrix}
+=
+\begin{bmatrix}
+\lambda \\
+c \rho^- + d \sigma^-
+\end{bmatrix}
+\end{aligned}\]</div><p>where <span>$\alpha d - \beta c \neq 0$</span>. Meaning that we just added an auxiliary linear equation to &quot;enforce&quot; transmissive boundary conditions. The choice <span>$c=1$</span>, <span>$d = 0$</span>, leads to</p><div>\[\begin{aligned}
+    \rho^* &amp;= \rho^- \\
+    \sigma^* &amp;= \frac{\gamma}{\alpha} - \frac{\beta}{\alpha} \rho^-
+\end{aligned}\]</div><p>This is similar to how these boundary conditions are enforced in finite volume codes where one adds a relaxation term to the appropriate grid cell. The choice <span>$c = 0$</span>, <span>$d = 1$</span>, leads to</p><div>\[\begin{aligned}
+    \rho^* &amp;= \frac{\gamma}{\beta} - \frac{\beta}{\alpha} \sigma^- \\
+    \sigma^* &amp;= \sigma^-
+\end{aligned}\]</div><p>and the choice <span>$c = -\beta$</span> and <span>$d = \alpha$</span> leads to</p><div>\[\begin{aligned}
+(\alpha^2 + \beta^2) \rho^* &amp;= \alpha \lambda + \beta^2 \rho^- - \beta \alpha \sigma^- \\
+(\alpha^2 + \beta^2) \sigma^* &amp;= \beta \lambda - \alpha \beta \rho^- + \alpha^2 \sigma^-
+\end{aligned}\]</div><p>which reduced to Dirichlet boundary conditions when <span>$\alpha \neq 0, \beta = 0$</span> and Neumann boundary conditions when <span>$\alpha = 0, \beta \neq 0$</span>.</p><p>At this point it is unclear which of these choices works best, or if they all lead to the same results. Certainly one can generalize by including ghost-points. At any rate it is documented here for future reference and to open up discussion.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../dg_single_element/">« Single Element</a><a class="docs-footer-nextpage" href="../inexact_quadrature/">Variational Crimes »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 23 June 2020 04:28">Tuesday 23 June 2020</span>. Using Julia version 1.4.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
