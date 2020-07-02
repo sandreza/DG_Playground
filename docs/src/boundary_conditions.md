@@ -399,7 +399,7 @@ c \rho^- + d \sigma^-
 \end{bmatrix}
 \end{aligned}
 ```
-where ``\alpha d - \beta c \neq 0``. Meaning that we just added an auxiliary linear equation to "enforce" transmissive boundary conditions.
+where ``\alpha d - \beta c \neq 0``. We just added an auxiliary linear equation to "enforce" transmissive boundary conditions.
 The choice ``c=1``, ``d = 0``, leads to
 ```math
 \begin{aligned}

@@ -1,5 +1,5 @@
 using DG_Playground
-include("advection_utils.jl")
+include(pwd() * "/examples/advection_utils.jl")
 using Plots, DifferentialEquations, JLD2, Printf, LinearAlgebra
 
 # Mesh Stuff
@@ -52,3 +52,8 @@ end
 relative_error = norm(sol.u[1] .- sol.u[end]) ./ norm(sol.u[end])
 relative_error_string = @sprintf("%.1e", relative_error)
 println("The relative error is " * relative_error_string)
+
+##
+println("hello")
+println("goodbye")
+##
