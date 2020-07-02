@@ -46,11 +46,6 @@ end
 Φ = Flux(0, Signature(1), (1), Advection)
 ∇⋅Φ
 
-@syms ∇::Gradient Φ::Field
-
-ff = ( ∇*∇+∇ )
-
-
 ###
 
 struct Field{𝒮}
