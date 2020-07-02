@@ -1,8 +1,8 @@
 using DG_Playground
 using Plots, DifferentialEquations, JLD2, Printf
 
-# Define the system
-const κ = 0.01
+# (1) Define the system
+const κ = 0.001
 
 function calculate_hyperbolic_flux(x)
     return κ .* x
@@ -33,20 +33,20 @@ function burgers!(u̇, u, params, t)
     return nothing
 end
 
-# Define Mesh
+# (2) Define Mesh
 K = 20     # Number of elements
-n = 3      # Polynomial Order
+n = 2      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
-𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
+𝒢 = Mesh(K, n, xmin, xmax) # Generate Uniform Mesh
 
-# Define Gradient Object
+# Define Gradient Object (sugar)
 ∇ = Gradient(𝒢)
 
-# Define Initial Condition
+# (3) Define Initial Condition
 u = @.  exp(-2 * (xmax-xmin) / 3 * (𝒢.x - (xmax-xmin)/2)^2)
 
-# Annotate Fluxes
+# (4) Annotate Fluxes
 # Define hyperbolic flux (associated with diffusion)
 α = -0.0 # Rusanov prameter
 flux_type = Rusanov(α)
@@ -74,7 +74,7 @@ flux_field = Field(field_data, field_bc)
 state = copy(u)
 𝒜Φ = Flux(flux_type, flux_field, state, calculate_advective_flux)
 
-# Define ODE Problem
+# (5) Define ODE Problem
 Δx = 𝒢.x[2] - 𝒢.x[1]
 dt = minimum([Δx^2 / κ * 0.1, abs(Δx / α)*0.3])
 tspan  = (0.0, 20.0)
@@ -82,10 +82,12 @@ params = (∇, Φ, ∇Φ, 𝒜Φ)
 rhs! = burgers!
 
 # Define ODE problem
-prob = ODEProblem(rhs!, u, tspan, params);
+ode_problem = (rhs!, u, tspan, params)
+prob = ODEProblem(ode_problem...);
 # Solve it
-sol  = solve(prob, Heun(), dt=dt, adaptive = false);
-# Heun(), RK4, Tsit5
+ode_method = Heun() # Heun(), RK4, Tsit5
+sol  = solve(prob, ode_method, dt=dt, adaptive = false);
+
 # Plot it
 theme(:juno)
 nt = length(sol.t)
