@@ -22,8 +22,8 @@ struct Gradient{𝒟, 𝒯}
     label::𝒯
 end
 
-# Field Struct
-struct Field{𝒯, 𝒮, 𝒟, ℒ}
+# Flux Struct
+struct Flux{𝒯, 𝒮, 𝒟, ℒ}
     order::𝒯
     signature::𝒮
     dims::𝒟
@@ -36,14 +36,14 @@ function split(∇::Gradient{𝒟, 𝒯}) where {𝒟, 𝒯}
 end
 
 
-function ⋅(∇::Gradient, Φ::Field)
+function ⋅(∇::Gradient, Φ::Flux)
     dims = (∇.dims, Φ.dims[1])
-    return Field(Φ.order + 1, Φ.signature,  dims, Φ.label)
+    return Flux(Φ.order + 1, Φ.signature,  dims, Φ.label)
 end
 
 # check some code
 ∇ = Gradient(3, (:x, :y, :z))
-Φ = Field(0, Signature(1), (1), Advection)
+Φ = Flux(0, Signature(1), (1), Advection)
 ∇⋅Φ
 
 @syms ∇::Gradient Φ::Field
