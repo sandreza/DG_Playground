@@ -8,7 +8,6 @@ face AND volume integrals for the DifferentialOperator:
 """
 
 export Divergence, Curl, Gradient
-export ∇
 
 abstract type DifferentialOperator <: Operator end
 

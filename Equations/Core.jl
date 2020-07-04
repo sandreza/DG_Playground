@@ -1,4 +1,11 @@
 
+export AbstractExpression
+export Terminal
+export Operator
+export shape, operands, reconstruct
+export geometric_dimension, topological_dimension
+export compute_hash, hash_behavior
+
 """
 Base type for all PDE expressions
 """
@@ -36,9 +43,6 @@ abstract type DiagnosticQuantity <: Terminal end
 """
 An expression obtained after applying an operator to
 an existing expression. For example, differentiation.
-
-We can create a class of operators. We might want to distinguish
-between different types of operators.
 """
 abstract type Operator <: AbstractExpression end
 
@@ -63,3 +67,10 @@ end
 function reconstruct(o::Operator, operands::VarTuple{AbstractExpression}...)
     return typeof(o)(operands...)
 end
+
+geometric_dimension(::AbstractExpression) = -1
+topological_dimension(x::Any)::Dimension = x.topological_dimension
+
+hash_behavior(x::Any) = x
+hash_behavior(x::AbstractExpression) = x.hash_code
+compute_hash(o::Operator) = hash((typecode(o), (hash(op) for op in operands(o))...))
