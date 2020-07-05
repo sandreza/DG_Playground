@@ -59,6 +59,11 @@ struct Dirichlet2{𝒯} <: AbstractBoundaryCondition
     right::𝒯
 end
 
+struct FluxBC{𝒯} <: AbstractBoundaryCondition
+    left::𝒯
+    right::𝒯
+end
+
 struct Inflow{𝒯} <: AbstractBoundaryCondition
     in::𝒯
 end

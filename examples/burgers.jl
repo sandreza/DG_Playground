@@ -38,7 +38,7 @@ K = 20     # Number of elements
 n = 2      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
-𝒢 = Mesh(K, n, xmin, xmax) # Generate Uniform Mesh
+𝒢 = Mesh(K, n, xmin, xmax, periodic = true) # Generate Uniform Periodic Mesh
 
 # Define Gradient Object (sugar)
 ∇ = Gradient(𝒢)

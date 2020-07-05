@@ -411,7 +411,7 @@ mesh(K, n, xmin, xmax)
     return grid values
 
 """
-function Mesh(KK, nn, xmin, xmax)
+function Mesh(KK, nn, xmin, xmax; periodic = false)
     # initialize parameters
     K = KK
     α = 0; β = 0;
@@ -459,6 +459,12 @@ function Mesh(KK, nn, xmin, xmax)
 
     # build inverse metric at the surface
     fscale = 1 ./ J[fmask2,:]
+
+    # hack for periodicity
+    if periodic
+        vmapP[1] = vmapM[end]
+        vmapP[end] = vmapM[1]
+    end
 
     return Mesh{typeof(x),typeof(K),typeof(r),typeof(vmapP)}(K, n, nFP, nFaces, r, x, vmapM, vmapP, vmapB, mapB, mapI, mapO, vmapI, vmapO, D, M, Mi, lift, rx, normals, fscale)
 end

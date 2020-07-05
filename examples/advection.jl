@@ -7,7 +7,7 @@ K = 6     # Number of elements
 n = 2      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
-𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
+𝒢 = Mesh(K, n, xmin, xmax, periodic = true) # Generate Mesh
 ∇ = Gradient(𝒢) # define gradient object
 
 # Define Initial Condition
@@ -53,7 +53,3 @@ relative_error = norm(sol.u[1] .- sol.u[end]) ./ norm(sol.u[end])
 relative_error_string = @sprintf("%.1e", relative_error)
 println("The relative error is " * relative_error_string)
 
-##
-println("hello")
-println("goodbye")
-##

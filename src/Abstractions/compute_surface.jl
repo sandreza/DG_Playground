@@ -1,262 +1,90 @@
-# Generic Default Flux that works with everything
+##############################
+# Boundary Conditions        #
+##############################
+function compute_boundary!(diffs, data, 𝒢, a::Periodic, calculate::Function)
+    # periodic functions have no boundary
+    return nothing
+end
+
+function compute_boundary!(diffs, data, 𝒢, bc::Inflow{𝒮}, calculate::Function) where 𝒮
+    uin  = -data[𝒢.vmapI] + 2 .* calculate(bc.in)
+    uout =  data[𝒢.vmapO]
+    diffs[𝒢.mapI]  =  @. (data[𝒢.vmapI] + uin)
+    diffs[𝒢.mapO]  =  @. (data[𝒢.vmapO] + uout)
+    return nothing
+end
+
+function compute_boundary!(diffs, data, 𝒢, bc::Outflow{𝒮}, calculate::Function) where 𝒮
+    uin  =  data[𝒢.vmapI]
+    uout =  data[𝒢.vmapO] - 2.0 .* calculate(bc.out)
+    diffs[𝒢.mapI]  =  @. (data[𝒢.vmapI] + uin)
+    diffs[𝒢.mapO]  =  @. (data[𝒢.vmapO] + uout)
+    return nothing
+end
+
+function compute_boundary!(diffs, data, 𝒢, bc::Dirichlet{𝒮}, calculate::Function) where 𝒮
+    uin  = -data[𝒢.vmapI] + 2 .* calculate(bc.left)
+    uout = -data[𝒢.vmapO] + 2 .* calculate(bc.right)
+    diffs[𝒢.mapI]  =  @. (data[𝒢.vmapI] + uin)
+    diffs[𝒢.mapO]  =  @. (data[𝒢.vmapO] + uout)
+    return nothing
+end
+
+function compute_boundary!(diffs, data, 𝒢, bc::Dirichlet2{𝒮}, calculate::Function) where 𝒮
+    uin  = calculate(bc.left)
+    uout = calculate(bc.right)
+    diffs[𝒢.mapI]  =  @. (data[𝒢.vmapI] + uin)
+    diffs[𝒢.mapO]  =  @. (data[𝒢.vmapO] + uout)
+    return nothing
+end
+
+function compute_boundary!(diffs, data, 𝒢, bc::FluxBC{𝒮}, calculate::Function) where 𝒮
+    uin  = bc.left
+    uout = bc.right
+    diffs[𝒢.mapI]  =  @. (data[𝒢.vmapI] + uin)
+    diffs[𝒢.mapO]  =  @. (data[𝒢.vmapO] + uout)
+    return nothing
+end
+
+function compute_boundary!(diffs, data, 𝒢, bc::FreeFlux, calculate::Function)
+    uin  = data[𝒢.vmapI]
+    uout = data[𝒢.vmapO]
+    diffs[𝒢.mapI]  =  @. (data[𝒢.vmapI] + uin)
+    diffs[𝒢.mapO]  =  @. (data[𝒢.vmapO] + uout)
+end
+
+##############################
+# Numerical Fluxes           #
+##############################
+
+# Generic Default Flux that works with Neglect flux
 function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::AbstractBoundaryCondition, state::AbstractArray, method::NeglectFlux, calculate::Function)
     return 𝒢.lift * zeros((𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
 end
 
-# Note that there needs to be changes to handle
-# time dependent fluxes and boudnary conditions
-# Furthermore fluxes that change on the surface also need
-# to be changed
-
-
-################################
-# Periodic Boundary Conditions #
-################################
 # Central
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Central, calculate::Function)
+function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::AbstractBoundaryCondition, state::AbstractArray, method::Central, calculate::Function)
     # compute fluxes at interface
     diffs = reshape( (Φ.data[𝒢.vmapM] - Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
+    # Handle Boundaries
+    compute_boundary!(diffs, Φ.data, 𝒢, bc, calculate)
+    # Include factor of 2 for the weak-strong form
     @. diffs *= 1.0 / 2.0
-    # Handle Periodic Boundaries
-    uin  = Φ.data[𝒢.vmapO]
-    uout = Φ.data[𝒢.vmapI]
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] - uin) / 2
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] - uout) / 2
     # Compute Lift Operator
     lifted = - 𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
     return lifted
 end
 
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Slider{𝒯, 𝒮}, calculate::Function) where {𝒯, 𝒮}
-    # compute fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] - Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Periodic Boundaries
-    uin  = Φ.data[𝒢.vmapO]
-    uout = Φ.data[𝒢.vmapI]
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] - uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] - uout)
-    # Adds extra part
-    @. diffs = -1//2 * diffs * (𝒢.normals - (1 - method.α) * abs(method.v * 𝒢.normals)/method.v)
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* diffs)
-    return lifted
-end
-
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, a::Periodic, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where 𝒯
+# Rusanov
+function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::AbstractBoundaryCondition, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
     # first compute numerical fluxes at interface
     diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Periodic Boundaries
-    uin  = Φ.data[𝒢.vmapO]
-    uout = Φ.data[𝒢.vmapI]
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
+    # Handle Boundaries
+    compute_boundary!(diffs, Φ.data, 𝒢, bc, calculate)
+    # Include factor of 2 for the weak-strong form
     @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
+    # Extra dissipation for Rusanov
     @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-    # Handle boundary again
-    uin  = state[𝒢.vmapO]
-    uout = state[𝒢.vmapI]
-    diffs[𝒢.mapI]  +=  @. method.α * 𝒢.normals[𝒢.mapI] * ( state[𝒢.vmapI] - uin) / 2.0
-    diffs[𝒢.mapO]  +=  @. method.α * 𝒢.normals[𝒢.mapO] * ( state[𝒢.vmapO] - uout ) / 2.0
-    # Now create jump in flux, (Weak-Strong form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-
-##############################
-# Inflow Boundary Conditions #
-##############################
-
-# Inflow Boundary Conditions
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Inflow{𝒮}, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
-    uin  = -Φ.data[𝒢.vmapI] + 2 .* calculate(bc.in)
-    uout =  Φ.data[𝒢.vmapO]
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
-    # Now create jump in flux, (Weak-Strong form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-
-# Inflow Boundary Conditions
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Inflow2{𝒮}, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
-    uin  =  calculate(bc.in)
-    uout =  Φ.data[𝒢.vmapO]
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
-    # Now create jump in flux, (Weak-Strong form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-##############################
-# Outflow Boundary Conditions #
-##############################
-
-# Outflow Boundary Conditions
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Outflow{𝒮}, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Outflow Boundary Condition
-    uin  =  Φ.data[𝒢.vmapI]
-    uout = -Φ.data[𝒢.vmapO] + 2.0 .* calculate(bc.out)
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
-    # Now create jump in flux, (Strong-Weak form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-
-#################################
-# Dirichlet Boundary Conditions #
-#################################
-
-# Dirichlet Boundary Conditions
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Dirichlet{𝒮}, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
-    uin  = -Φ.data[𝒢.vmapI] + 2 .* calculate(bc.left)
-    uout = -Φ.data[𝒢.vmapO] + 2 .* calculate(bc.right)
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
-    # Now create jump in flux, (Weak-Strong form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-
-# Dirichlet2 Boundary Conditions
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Dirichlet2{𝒮}, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
-    uin  = calculate(bc.left)
-    uout = calculate(bc.right)
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
-    # Now create jump in flux, (Weak-Strong form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-
-
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Dirichlet{𝒮}, state::AbstractArray, method::RusanovBC{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
-    uin  = calculate(bc.left)
-    uout = calculate(bc.right)
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
-    # Enforce Rusanov on Boundary
-    diffs[𝒢.mapI] += method.α * 𝒢.normals[𝒢.mapI] .* (uin .- state[𝒢.vmapI]) / 2.0
-    diffs[𝒢.mapO] += method.α * 𝒢.normals[𝒢.mapO] .* (uout .- state[𝒢.vmapO]) / 2.0
-
-    # Now create jump in flux, (Weak-Strong form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::Dirichlet2{𝒮}, state::AbstractArray, method::RusanovBC{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
-    uin  = calculate(bc.left)
-    uout = calculate(bc.right)
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
-    # Enforce Rusanov on Boundary
-    diffs[𝒢.mapI] += method.α .* 𝒢.normals[𝒢.mapI] .* (uin .- state[𝒢.vmapI]) / 2.0
-    diffs[𝒢.mapO] += method.α .* 𝒢.normals[𝒢.mapO] .* (uout .- state[𝒢.vmapO]) / 2.0
-
-    # Now create jump in flux, (Weak-Strong form)
-    @. diffs[:] -= Φ.data[𝒢.vmapM]
-    # Compute Lift Operator
-    lifted =  𝒢.lift * (𝒢.fscale .* 𝒢.normals .* diffs)
-    return lifted
-end
-
-#################################
-# Free flux Boundary Conditions #
-#################################
-
-# Free flux Boundary Conditions
-function compute_surface_terms(𝒢::AbstractMesh, Φ::AbstractField, bc::FreeFlux, state::AbstractArray, method::Rusanov{𝒯}, calculate::Function) where {𝒯, 𝒮}
-    # first compute numerical fluxes at interface
-    diffs = reshape( (Φ.data[𝒢.vmapM] + Φ.data[𝒢.vmapP]), (𝒢.nFP * 𝒢.nFaces, 𝒢.K ))
-    # Handle Inflow Boundary Condition
-    uin  = Φ.data[𝒢.vmapI]
-    uout = Φ.data[𝒢.vmapO]
-    diffs[𝒢.mapI]  =  @. (Φ.data[𝒢.vmapI] + uin)
-    diffs[𝒢.mapO]  =  @. (Φ.data[𝒢.vmapO] + uout)
-    # Central Flux
-    @. diffs *= 1.0 / 2.0
-    # Extra dissipation for Rusonov
-    @. diffs[:] += method.α * 𝒢.normals[:] .* (state[𝒢.vmapM] - state[𝒢.vmapP]) / 2.0
-
     # Now create jump in flux, (Weak-Strong form)
     @. diffs[:] -= Φ.data[𝒢.vmapM]
     # Compute Lift Operator
