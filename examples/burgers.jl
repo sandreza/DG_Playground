@@ -80,7 +80,7 @@ dt = minimum([Δx^2 / κ * 0.1, abs(Δx / α)*0.3])
 tspan  = (0.0, 20.0)
 params = (∇, Φ, ∇Φ, 𝒜Φ)
 rhs! = burgers!
-
+##
 # Define ODE problem
 ode_problem = (rhs!, u, tspan, params)
 prob = ODEProblem(ode_problem...);
@@ -89,6 +89,7 @@ ode_method = Heun() # Heun(), RK4, Tsit5
 sol  = solve(prob, ode_method, dt=dt, adaptive = false);
 
 # Plot it
+##
 theme(:juno)
 nt = length(sol.t)
 num = 40 # Number of Frames
@@ -101,5 +102,5 @@ for i in indices
     plt = plot(𝒢.x, sol.u[i], xlims=(xmin, xmax), ylims = (-1.1,1.1), marker = 3,    leg = false)
     plot!(𝒢.x, sol.u[1], xlims = (xmin, xmax), ylims = (-1.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     display(plt)
-    # sleep(0.25)
+    sleep(0.1)
 end
