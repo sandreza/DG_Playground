@@ -7,7 +7,7 @@ K = 10     # Number of elements
 n = 4      # Polynomial Order
 xmin = 0.0 # left endpoint of domain
 xmax = 2π  # right endpoint of domain
-𝒢 = Mesh(K, n, xmin, xmax) # Generate Mesh
+𝒢 = Mesh(K, n, xmin, xmax, periodic = true) # Generate Mesh
 ∇ = Gradient(𝒢)
 
 # Define Initial Condition
@@ -66,5 +66,5 @@ for i in indices
     plt = plot(𝒢.x, sol.u[i], xlims=(xmin, xmax), ylims = (-0.1,1.1), marker = 3,    leg = false)
     plot!(𝒢.x, sol.u[1], xlims = (xmin, xmax), ylims = (-0.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     display(plt)
-    # sleep(0.25)
+    sleep(0.1)
 end
