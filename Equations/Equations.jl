@@ -7,11 +7,16 @@ and labeling/annotating balance laws.
 module Equations
 
 include("Utilities.jl")
-include("Core.jl")
+
 include("Domains.jl")
+
+include("Core.jl")
+include("Fields.jl")
 include("Algebra.jl")
 include("Differentiation.jl")
 include("Integration.jl")
+
+# include("PDESystems.jl")
 
 # """
 # Helper function
