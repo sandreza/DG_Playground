@@ -5,6 +5,10 @@ abstract type AbstractOperation end
 abstract type UnaryOperation{𝒯} <: AbstractOperation end
 abstract type BinaryOperation{𝒯, 𝒮} <: AbstractOperation end
 
+# Algebra
+struct Negative{𝒯} <: UnaryOperation{𝒯}
+    term::𝒯
+end
 struct Add{𝒯, 𝒮} <: BinaryOperation{𝒯, 𝒮}
     term1::𝒯
     term2::𝒮
@@ -20,6 +24,19 @@ struct Dot{𝒯, 𝒮} <: BinaryOperation{𝒯, 𝒮}
     term2::𝒮
 end
 
+# Calculus
+struct Gradient{𝒯,𝒮} <: AbstractOperation
+    operand::𝒯
+    metadata::𝒮
+end
+
+struct Derivative{𝒯}
+    metadata::𝒯
+end
+
+
+
+# Evaluation functions for concrete representation
 function eval(e::Add{Int, Int})
     return e.term1 + e.term2
 end
@@ -34,6 +51,10 @@ end
 
 function eval(e::Add{𝒮, 𝒯}) where {𝒮, 𝒯}
     return eval(e.term1) + eval(e.term2)
+end
+
+function eval(e::Negative{𝒮}) where {𝒮}
+    return -eval(e.term)
 end
 
 # The next few are necessary for speed since eval(::Int) is relatively expensive
