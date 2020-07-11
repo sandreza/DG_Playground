@@ -3,7 +3,8 @@
 
 export Sum
 
-import Base: +, -
+import Base: +, -, *
+import LinearAlgebra: ⋅
 
 struct Sum{OT} <: Operator
     operands::OT
@@ -33,3 +34,12 @@ rank(a::Negative{T}) where T = rank(a.operand)
 function -(a::AbstractExpression, b::AbstractExpression)
     return a + -b
 end
+
+struct DotProduct{OT} <: Operator
+    operands::OT
+end
+
+⋅(a::AbstractExpression, b::AbstractExpression) = DotProduct(a, b)
+*(a::AbstractExpression, b::AbstractExpression) = a ⋅ b
+
+rank(o::DotProduct{T}) where T = rank(o.operands[0])

@@ -55,18 +55,18 @@ operands(o::Operator) = o.operands
 function shape end
 function reconstruct end
 
-function reconstruct(t::Terminal, operands::VarTuple{AbstractExpression}...)
-    !isempty(operands) && error("Terminal has no operands")
-    return t
-end 
+# function reconstruct(t::Terminal, operands::VarTuple{AbstractExpression}...)
+#     !isempty(operands) && error("Terminal has no operands")
+#     return t
+# end 
 
-function reconstruct(o::Operator, operands::VarTuple{AbstractExpression}...)
-    return typeof(o)(operands...)
-end
+# function reconstruct(o::Operator, operands::VarTuple{AbstractExpression}...)
+#     return typeof(o)(operands...)
+# end
 
-geometric_dimension(::AbstractExpression) = -1
-topological_dimension(x::Any)::Dimension = x.topological_dimension
+# geometric_dimension(::AbstractExpression) = -1
+# topological_dimension(x::Any)::Int = x.topological_dimension
 
-hash_behavior(x::Any) = x
-hash_behavior(x::AbstractExpression) = x.hash_code
-compute_hash(o::Operator) = hash((typecode(o), (hash(op) for op in operands(o))...))
+# hash_behavior(x::Any) = x
+# hash_behavior(x::AbstractExpression) = x.hash_code
+# compute_hash(o::Operator) = hash((typecode(o), (hash(op) for op in operands(o))...))
