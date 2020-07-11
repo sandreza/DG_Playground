@@ -35,8 +35,9 @@ end
 """
 struct PeriodicIntervalDomain{FT} <: AbstractDomain
     length::FT
-    function PeriodicIntervalDomain(length)
-        @assert length > 0
+    function PeriodicIntervalDomain(a, b)
+        @assert a < b
+        length = abs(b - a)
         return new{typeof(length)}(length)
     end
 end
