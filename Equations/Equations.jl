@@ -6,7 +6,7 @@ and labeling/annotating balance laws.
 """
 module Equations
 
-include("Utilities.jl")
+#include("Utilities.jl")
 
 include("Domains.jl")
 
@@ -71,7 +71,7 @@ struct BalanceLaw{TT <: AbstractExpression, ET <: AbstractExpression} <: Abstrac
     lhs::TT
     rhs::ET
 end
-Base.:(==)(a::BalanceLaw, b::BalanceLaw) = isequal((a.lhs, a.rhs), (b.lhs, b.rhs))
+:(~)(a::BalanceLaw, b::BalanceLaw) = isequal((a.lhs, a.rhs), (b.lhs, b.rhs))
 
 """
 Allows us to write:
@@ -81,7 +81,7 @@ Allows us to write:
 in code and immediate construct the `BalanceLaw`.
 
 """
-Base.:(===)(lhs::AbstractExpression, rhs::AbstractExpression) = BalanceLaw(lhs, rhs)
+:(~)(lhs::AbstractExpression, rhs::AbstractExpression) = BalanceLaw(lhs, rhs)
 
 # # Sketch of search functions for extracting specific terms
 # function get_terms!(bl::BalanceLaw, terms, term_type)

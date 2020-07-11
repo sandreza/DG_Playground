@@ -3,8 +3,8 @@ export AbstractExpression
 export Terminal
 export Operator
 export shape, operands, reconstruct
-export geometric_dimension, topological_dimension
-export compute_hash, hash_behavior
+# export geometric_dimension, topological_dimension
+# export compute_hash, hash_behavior
 
 """
 Base type for all PDE expressions

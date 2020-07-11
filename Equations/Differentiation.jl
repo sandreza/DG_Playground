@@ -23,6 +23,12 @@ struct Gradient{T <: AbstractExpression} <: Operator
     operand::T
 end
 
+struct TemporalDerivative{T <: AbstractExpression} <: Operator
+    operand::T
+end
+
+∂t(o::AbstractExpression) = TemporalDerivative(o)
+
 # Define operators
 struct Grad end
 const ∇ = Grad()
