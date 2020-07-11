@@ -51,12 +51,8 @@ function Base.repr(o::Operator)
     return "$(typeof(o))$(str_ops)"
 end
 
-const VarTuple{T} = NTuple{N, T} where N
-const Dimension = Int32
-const DimensionTuple = VarTuple{Dimension}
-
-function shape end 
-function operands end
+operands(o::Operator) = o.operands
+function shape end
 function reconstruct end
 
 function reconstruct(t::Terminal, operands::VarTuple{AbstractExpression}...)

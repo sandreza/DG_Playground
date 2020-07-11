@@ -135,14 +135,14 @@ for approximating σ = g(∇q).
 """
 
 # Field Signature
-abstract type AbstractSignature end
+# abstract type AbstractSignature end
 
-struct Signature{TS, DS, RS, M} <: AbstractSignature
-    time_scale::TS
-    domain_space::DS
-    range_space::RS
-    model::M
-end
+# struct Signature{TS, DS, RS, M} <: AbstractSignature
+#     time_scale::TS
+#     domain_space::DS
+#     range_space::RS
+#     model::M
+# end
 
 # challenges
 # - how to "name" subexpressions

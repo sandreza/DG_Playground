@@ -23,7 +23,7 @@ end
 rank(a::Sum{T}) where T = rank(a.operands[1])
 
 struct Negative{OT} <: Operator
-    operand::OT
+    operands::OT
 end
 
 -(t::AbstractExpression) = Negative(t)
