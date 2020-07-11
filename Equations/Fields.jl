@@ -11,37 +11,40 @@ end
 
 struct ScalarField{S, T} <: AbstractTensorField{0}
     metadata::S
-    function ScalarField(; metadata = nothing)
-        return new{typeof(metadata)}(metadata)
-    end
+end
+
+function ScalarField(; metadata = nothing)
+    return ScalarField{typeof(metadata)}(metadata)
 end
 
 struct VectorField{S, T} <: AbstractTensorField{1}
     metadata::S
     data::T
-    function VectorField(
-        fields::AbstractArray{AbstractTensorField{0}, 1};
-        metadata = nothing,
-        data = nothing,
-    )
-        data = FieldBase{1}(size(fields), fields)
-        return new{typeof(metadata),
-                   typeof(data)}(metadata, data)
-    end
+end
+
+function VectorField(
+    fields::AbstractArray{AbstractTensorField{0}, 1};
+    metadata = nothing,
+    data = nothing,
+)
+    data = FieldBase{1}(size(fields), fields)
+    return VectorField{typeof(metadata),
+                       typeof(data)}(metadata, data)
 end
 
 struct MatrixField{S, T} <: AbstractTensorField{2}
     metadata::S
     data::T
-    function MatrixField(
-        fields::AbstractArray{AbstractTensorField{0}, 2};
-        metadata = nothing,
-        data = nothing,
-    )
-        data = FieldBase{2}(size(fields), fields)
-        return new{typeof(metadata),
-                   typeof(data)}(metadata, data)
-    end
+end
+
+function MatrixField(
+    fields::AbstractArray{AbstractTensorField{0}, 2};
+    metadata = nothing,
+    data = nothing,
+)
+    data = FieldBase{2}(size(fields), fields)
+    return MatrixField{typeof(metadata),
+                       typeof(data)}(metadata, data)
 end
 
 rank(::AbstractTensorField{T}) where T = T
