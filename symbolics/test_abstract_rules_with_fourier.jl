@@ -1,52 +1,28 @@
-include(pwd()*"/symbolics" * "/concrete_fourier.jl")
+using FFTW, BenchmarkTools, Plots
+include(pwd()*"/symbolics" * "/fourier_eval_rules.jl")
 # Test concrete implementation
-N = 2^9
+N = 2^6
 a,b = (0, 2π)
 x = fourier_nodes(a, b, N)
 k = fourier_wavenumbers(a, b, N)
 P = plan_fft(x*(1+0im))
 
-∂ˣ(y) = fourier_derivative(y, P, k)
-
-y = @. sin(2π*x)*(1+0im)
-z = ∂ˣ(y)
-rz = real.(z)
-scatter(x, rz, label = "fft derivative" )
-plot!(x, 2π.*cos.(2π.*x), label = "exact" )
 
 # Test Abstract implementation
-fourier_meta_data = FourierMetaData(N, k, NoFilter, P)
-y_fourier = FourierData(y)
-field = FourierField(y_fourier, fourier_meta_data)
+fourier_meta_data = FourierMetaData(N, k, nothing, P)
+∂x(a::AbstractExpression) = Gradient(a, fourier_meta_data)
 
-∂x = Derivative(fourier_meta_data)
-fourier_derivative(y::FourierData, P, k) = fourier_derivative(y.data, P, k)
-∂y(y) = fourier_derivative(y, P, k)
-
-eval((∂x⋅(field * field) ) + field)
-eval(∂x⋅(field)) * eval(field)
-
-# now the following will work
-eval(∂x⋅(field * field) * field)
-
-second_deriv = eval(∂x⋅(∂x⋅field))
-plot(x, real.(second_deriv) ./ (2π)^2)
-
-##
+# initial condition
 u0 = @. exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2)*(1+0im)
 
-fourier_meta_data = FourierMetaData(N, k, NoFilter, P)
-y_fourier = FourierData(u0)
-field = FourierField(y_fourier, fourier_meta_data)
-plot(x, real.(u0))
+fourier_meta_data = FourierMetaData(N, k, nothing, P)
+y_fourier = Data(u0)
+field = Field(y_fourier, fourier_meta_data)
 u = field
 κ = 0.01
-fourier_meta_data = FourierMetaData(N, k, NoFilter, P)
-y_fourier = FourierData(y .* 0.0 .+ κ)
-κ = FourierField(y_fourier, fourier_meta_data)
 # Burgers equation rhs
-u̇ = -(∂x⋅(u * u) ) + κ * ( ∂x⋅(∂x⋅u) )
-params = (u̇, u, κ)
+u̇ = -∂x(u * u * 0.5)  + κ * ∂x(∂x(u))
+p = (u̇, u, κ)
 
 function fourier_burgers!(v̇ , v, params, t)
     # unpack params
@@ -64,7 +40,7 @@ rhs! = fourier_burgers!
 tspan = (0.0, 20.0)
 
 # Define ODE problem
-ode_problem = (rhs!, u0, tspan, params)
+ode_problem = (rhs!, u0, tspan, p)
 
 ##
 using DifferentialEquations
@@ -91,11 +67,12 @@ for i in indices
     sleep(0.1)
 end
 
-##
-# timings
 
-@btime ∂ˣ(y .* y)+ ∂ˣ(∂ˣ(y))
-@btime eval(u̇)
 
-##
-
+#=
+# compare these two philosophies
+∂ˣ(y) = fourier_derivative(y, P, k)
+y = @. sin(x)*(1+0im)
+@btime -∂ˣ(y .* y .* 0.5) + 0.01 .* ∂ˣ(∂ˣ(y));
+@btime eval(-∂x(u * u * 0.5) + κ * ∂x(∂x(u)));
+=#

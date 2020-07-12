@@ -25,7 +25,7 @@ struct Dot{𝒯, 𝒮} <: BinaryOperation{𝒯, 𝒮}
 end
 
 # Calculus
-struct Gradient{𝒯,𝒮} <: AbstractOperation
+struct Gradient{𝒯, 𝒮} <: AbstractOperation
     operand::𝒯
     metadata::𝒮
 end

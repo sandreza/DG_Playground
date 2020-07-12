@@ -71,3 +71,10 @@ struct System{𝒮, ℒ}
     equations::𝒮
     label::ℒ
 end
+##
+e = typeof(u)
+@syms x::e
+
+a = :+
+
+3 $a 5

@@ -1,5 +1,5 @@
 using Plots, FFTW
-include(pwd()*"/symbolics/"*"composites.jl")
+include(pwd() * "/symbolics/" * "composites.jl")
 
 using LinearAlgebra
 import Base: +, *, /, -
@@ -15,6 +15,8 @@ struct FourierData{𝒯}
 end
 
 -(field1::FourierData{𝒯}) where {𝒯} = -field1.data
+
+
 +(field1::FourierData{𝒯}, field2::FourierData{𝒯}) where {𝒯} = field1.data + field2.data
 +(field1::FourierData{𝒯}, field2::𝒮) where {𝒯, 𝒮} = field1.data + field2
 +(field1::𝒯, field2::FourierData{𝒮}) where {𝒯, 𝒮} = field1 + field2.data
