@@ -46,7 +46,12 @@ y_fourier = FourierData(y .* 0.0 .+ κ)
 # Burgers equation rhs
 u̇ = -(∂x⋅(u*u)) + κ * ( ∂x⋅(∂x⋅u) )
 params = (u̇, u, κ)
-
+#=
+:(
+u̇ = -(∂x⋅(u*u)) + κ * ( ∂x⋅(σ) );
+σ = ∂x⋅u;
+)
+=#
 function fourier_burgers!(v̇ , v, params, t)
     # unpack params
     u̇ = params[1]           # Gradient operator
