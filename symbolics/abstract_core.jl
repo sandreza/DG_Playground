@@ -22,6 +22,7 @@ for unary_operator in unary_operators
     b_name, b_symbol = Meta.parse.(unary_operator)
     @eval eval(a::$b_name{𝒮}) where {𝒮} = $b_symbol(eval(a.term))
 end
+
 for binary_operator in binary_operators
     b_name, b_symbol = Meta.parse.(binary_operator)
     @eval eval(a::$b_name{𝒮, 𝒯}) where {𝒮, 𝒯} = $b_symbol(eval(a.term1), eval(a.term2))

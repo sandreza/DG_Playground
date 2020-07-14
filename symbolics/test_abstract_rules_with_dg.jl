@@ -67,3 +67,7 @@ for i in indices
     display(plt)
     sleep(0.1)
 end
+
+function adding_two_numbers(a,b)
+    return a+b
+end
