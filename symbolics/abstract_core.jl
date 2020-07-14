@@ -1,4 +1,5 @@
 # Define Operators
+import Base.show
 
 # Unary Operators, (name, symbol)
 unary_operators = []
@@ -26,7 +27,13 @@ end
 for binary_operator in binary_operators
     b_name, b_symbol = Meta.parse.(binary_operator)
     @eval eval(a::$b_name{𝒮, 𝒯}) where {𝒮, 𝒯} = $b_symbol(eval(a.term1), eval(a.term2))
+
+    @eval function Base.show(io::IO, operation::$b_name{𝒮, 𝒯}) where {𝒮, 𝒯}
+        print(io, "(", operation.term1, $b_symbol , operation.term2, ")")
+    end
 end
+
+
 
 # Data Eval
 eval(Φ::AbstractData) = Φ
