@@ -16,12 +16,17 @@ include(pwd() * "/symbolics/abstract_operations.jl")
 include(pwd() * "/symbolics/abstract_fields.jl")
 # Define Data
 include(pwd() * "/symbolics/abstract_data.jl")
+# Define equations and systems
+include(pwd() * "/symbolics/abstract_equations.jl")
 
 
 # Include Generic Evaluation Rules
 for unary_operator in unary_operators
     b_name, b_symbol = Meta.parse.(unary_operator)
     @eval eval(a::$b_name{𝒮}) where {𝒮} = $b_symbol(eval(a.term))
+    @eval function Base.show(io::IO, operation::$b_name{𝒮}) where {𝒮}
+        print(io, $b_symbol, "(", operation.term, ")")
+    end
 end
 
 for binary_operator in binary_operators

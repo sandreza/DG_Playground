@@ -4,7 +4,7 @@ struct Data{𝒯} <: AbstractData
 end
 
 for unary_operator in unary_operators
-    b_symbol = Meta.parse.("." * unary_operator[2]) #broadcast
+    b_symbol = Meta.parse.(unary_operator[2]) #broadcast
     @eval -(field1::AbstractData) where {𝒯} = broadcast($b_symbol, field1.data)
 end
 

@@ -16,13 +16,23 @@ field_md = DGMetaData(mesh, nothing, nothing);
 central = DGMetaData(mesh, u0, Rusanov(0.0));
 rusanov = DGMetaData(mesh, u0, Rusanov(α));
 y_dg = Data(u0);
+u̇ = Data(nothing);
 u = Field(y_dg, field_md);
 ∂xᶜ(a::AbstractExpression) = Gradient(a, central);
 ∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
 κ = 0.001 # Diffusivity Constant
 
 # Burgers equation rhs
-u̇ = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u));
+pde_equation = [
+    u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u))
+]
+pde_meta_data = Dict("name" => "Burgers Equation", "method" => "discontinuous Galerkin")
+pde_system = PDESystem(pde_equation,
+                       mesh,
+                       u0,
+                       nothing,
+                       pde_meta_data)
+
 # expr = :(u̇ = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u));); 
 # to change expr.args[1].args[2].args[2].args[2].args[1] = :∂xᶜ; eval(expr)
 # ODE set up
@@ -33,7 +43,7 @@ function dg_burgers!(v̇ , v, params, t)
     u̇ = params[1]           
     u = params[2]
     u.data.data .= real.(v)
-    v̇ .= eval(u̇)
+    v̇ .= eval(pde_system.equations[1].rhs)
     return nothing
 end
 
@@ -66,8 +76,4 @@ for i in indices
     plot!(x, real.(sol.u[1]), xlims = (a, b), ylims = (-1.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     display(plt)
     sleep(0.1)
-end
-
-function adding_two_numbers(a,b)
-    return a+b
 end
