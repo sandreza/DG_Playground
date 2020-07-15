@@ -3,6 +3,10 @@ include(pwd() * "/symbolics/abstract_core.jl")
 include(pwd() * "/src" * "/HesthavenWarburton" * "/utils.jl")
 include(pwd() * "/src" * "/HesthavenWarburton" * "/mesh.jl")
 
+function create_mesh(Ω::IntervalDomain; elements = K, polynomial_order = n)
+    return Mesh(elements, polynomial_order, Ω.a, Ω.b, periodic = Ω.periodic)
+end
+
 # Define Numerical Flux Type
 struct Rusanov{𝒯}
     α::𝒯
@@ -17,7 +21,7 @@ end
 # Periodic Boundary Conditions
 function compute_surface_terms(mesh::AbstractMesh, data, state::AbstractArray, method::Rusanov{𝒯}) where {𝒯, 𝒮}
     # first compute numerical fluxes at interface
-    diffs = reshape( (data[mesh.vmapM] + data[mesh.vmapP]), (mesh.nFP * mesh.nFaces, mesh.K ))
+    diffs = reshape( (data[mesh.vmapM] + data[mesh.vmapP]), (mesh.nFP * mesh.nFaces, mesh.K))
     # Include factor of 2 for the weak-strong form
     @. diffs *= 1.0 / 2.0
     # Extra dissipation for Rusanov
@@ -41,6 +45,7 @@ struct DGMetaData{𝒮, 𝒯, 𝒰}
     method::𝒰
 end
 ##
+# Derivatives
 dg_derivative(y::AbstractArray, md) = dg_derivative(md.mesh, y, md.state, md.method)
 dg_derivative(y::AbstractData, md) = dg_derivative(md.mesh, y.data, md.state, md.method)
 function eval(e::Gradient{𝒯, 𝒰}) where {𝒯, 𝒰 <: DGMetaData}

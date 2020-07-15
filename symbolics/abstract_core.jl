@@ -1,5 +1,6 @@
-# Define Operators
+# Define Operators (perhaps overload getproperty eventually?)
 import Base.show
+import Base: +, *, -
 
 # Unary Operators, (name, symbol)
 unary_operators = []
@@ -10,8 +11,21 @@ binary_operators = []
 push!(binary_operators, ["Add", "+"])
 push!(binary_operators, ["Multiply", "*"])
 
+# Define Abstract Types
+abstract type AbstractEquation end
+abstract type AbstractSystem end
+abstract type AbstractExpression end
+abstract type AbstractOperation <: AbstractExpression end
+abstract type UnaryOperation  <: AbstractOperation end
+abstract type BinaryOperation <: AbstractOperation end
+abstract type AbstractData <: AbstractExpression end
+abstract type AbstractMetaData <: AbstractExpression end
+
+
 # Define Algebraic Operators
 include(pwd() * "/symbolics/abstract_operations.jl")
+# Define Domains
+include(pwd() * "/symbolics/abstract_domains.jl")
 # Define Fields
 include(pwd() * "/symbolics/abstract_fields.jl")
 # Define Data
@@ -20,7 +34,7 @@ include(pwd() * "/symbolics/abstract_data.jl")
 include(pwd() * "/symbolics/abstract_equations.jl")
 
 
-# Include Generic Evaluation Rules
+# Include Generic Evaluation Rules and Output Format
 for unary_operator in unary_operators
     b_name, b_symbol = Meta.parse.(unary_operator)
     @eval eval(a::$b_name{𝒮}) where {𝒮} = $b_symbol(eval(a.term))
@@ -37,8 +51,6 @@ for binary_operator in binary_operators
         print(io, "(", operation.term1, $b_symbol , operation.term2, ")")
     end
 end
-
-
 
 # Data Eval
 eval(Φ::AbstractData) = Φ

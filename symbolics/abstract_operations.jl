@@ -1,10 +1,3 @@
-import Base: +, *, -
-
-abstract type AbstractExpression end
-abstract type AbstractOperation <: AbstractExpression end
-abstract type UnaryOperation  <: AbstractOperation end
-abstract type BinaryOperation <: AbstractOperation end
-
 # Define Struct and Symbol Overload for Unary Operators
 for unary_operator in unary_operators
     b_name, b_symbol = Meta.parse.(unary_operator)

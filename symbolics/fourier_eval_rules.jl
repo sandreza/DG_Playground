@@ -1,7 +1,7 @@
 include(pwd() * "/symbolics/abstract_core.jl")
 
 # Fourier Structs
-struct FourierMetaData{𝒮, 𝒱, ℱ, 𝒫}
+struct FourierMetaData{𝒮, 𝒱, ℱ, 𝒫} <: AbstractMetaData
     size::𝒮
     k::𝒱
     filter::ℱ
