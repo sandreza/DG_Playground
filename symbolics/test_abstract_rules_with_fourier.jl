@@ -1,12 +1,11 @@
 using FFTW, BenchmarkTools, Plots
 include(pwd()*"/symbolics" * "/fourier_eval_rules.jl")
 # Test concrete implementation
-N = 2^6
-a,b = (0, 2π)
+N = 2^8
+a, b = (0, 2π)
 x = fourier_nodes(a, b, N)
 k = fourier_wavenumbers(a, b, N)
 P = plan_fft(x*(1+0im))
-
 
 # Test Abstract implementation
 fourier_meta_data = FourierMetaData(N, k, nothing, P)
@@ -14,12 +13,12 @@ fourier_meta_data = FourierMetaData(N, k, nothing, P)
 
 # initial condition
 u0 = @. exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2)*(1+0im)
-
+# metadata and fields
 fourier_meta_data = FourierMetaData(N, k, nothing, P)
 y_fourier = Data(u0)
 field = Field(y_fourier, fourier_meta_data)
 u = field
-κ = 0.01
+κ = 0.001
 # Burgers equation rhs
 u̇ = -∂x(u * u * 0.5)  + κ * ∂x(∂x(u))
 p = (u̇, u, κ)
@@ -40,7 +39,7 @@ rhs! = fourier_burgers!
 tspan = (0.0, 20.0)
 
 # Define ODE problem
-ode_problem = (rhs!, u0, tspan, p)
+ode_problem = (rhs!, u0, tspan, p);
 
 ##
 using DifferentialEquations
@@ -67,7 +66,13 @@ for i in indices
     sleep(0.1)
 end
 
-
+# ref_grid = copy(x)
+# ref_sol = copy(real.(sol.u[end]))
+#=
+ref_plt = plot(ref_grid, ref_sol, xlims = (a, b), ylims = (-1.1,1.1), color = "blue", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
+plot!(x, real.(sol.u[end]), xlims=(a, b), ylims = (-1.1,1.1), marker = 3,    leg = false)
+display(ref_plt)
+=#
 
 #=
 # compare these two philosophies

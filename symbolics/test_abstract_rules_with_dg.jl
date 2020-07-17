@@ -1,7 +1,7 @@
 include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
 
 # Domain and Boundary
-Ω = IntervalDomain(0, 2π, periodic = true)
+Ω  = IntervalDomain(0, 2π, periodic = true)
 ∂Ω = ∂(Ω)
 
 # Initial Condition
@@ -20,15 +20,15 @@ u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
 #                 "second_order_fluxes" => (central, central))
 # dgmodel = DGModel(pde_system, mesh, metadata)
 
-K = 20     # Number of elements
+K = 8      # Number of elements
 n = 1      # Polynomial Order
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
 x = mesh.x
-u0 = @. u⁰(x, Ω.a, Ω.b)
+u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
 α = 0.2; # Rusanov parameter
-field_md = DGMetaData(mesh, nothing, nothing);
-central = DGMetaData(mesh, u0, Rusanov(0.0));
-rusanov = DGMetaData(mesh, u0, Rusanov(α));
+field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
+central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
+rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrape derivative metadata
 y_dg = Data(u0);
 u̇ = Data(nothing);
 u = Field(y_dg, field_md);
@@ -38,7 +38,7 @@ u = Field(y_dg, field_md);
 
 # Burgers equation rhs
 pde_equation = [
-    u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u))
+    u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u)),
 ]
 # GalerkinMethod <: AbstractSpatialDiscretization
 # ElementGalerkin <: GalerkinMethod
@@ -59,7 +59,7 @@ pde_system = PDESystem(pde_equation,
 # expr = :(u̇ = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u));); 
 # to change expr.args[1].args[2].args[2].args[2].args[1] = :∂xᶜ; eval(expr)
 # ODE set up
-p = (pde_system, u)
+p = (pde_system, u);
 
 function dg_burgers!(v̇ , v, params, t)
     # unpack parameters
@@ -95,8 +95,11 @@ indices = step * collect(1:num)
 pushfirst!(indices, 1)
 push!(indices, nt)
 for i in indices
-    plt = plot(x, real.(sol.u[i]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3, color = "green",   leg = false)
+    plt = plot(x, real.(sol.u[i]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
     plot!(x, real.(sol.u[1]), xlims = (Ω.a, Ω.b), ylims = (-1.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     display(plt)
     sleep(0.1)
 end
+##
+plot(x, real.(sol.u[end]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
+plot!(ref_grid, ref_sol, xlims = (a, b), ylims = (-1.1,1.1), color = "blue", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box, line = 3, label = "Reference Solution")
