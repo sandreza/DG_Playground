@@ -24,12 +24,17 @@ end
 a = Wrapper(1)
 c = a + a
 
-
-
+to_expr(t::Term) = Expr(:call, operation(t), to_expr.(arguments(t))...)
+to_expr(x) = x
+# This is absolutely necessary
 SymbolicUtils.show_simplified[] = false
 symbolic_c = SymbolicUtils.to_symbolic(c);
-
+(@rule ~b + ~b => ~b * ~b)(symbolic_c)
+# to go back
+to_expr(t::Term) = Expr(:call, operation(t), to_expr.(arguments(t))...)
+to_expr(x) = x
+eval(to_expr(symbolic_c))
 
 # (@rule b + b => b * b)(SymbolicUtils.to_symbolic(c))
 # ∂x = Sym{FnType{Tuple{Vararg{Any}}, Number}}(:∂x)
-#(@rule +(~a,~b) => Add(~b, ~a))(Wrapper(1) + Wrapper(2))
+#(@rule +(~a,~b) => Add(~b, ~a))(Wrapper(1) + Wrapper(2))s
