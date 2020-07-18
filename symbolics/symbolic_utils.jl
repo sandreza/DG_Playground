@@ -114,27 +114,33 @@ Postwalk(Chain([∂xf(u*u) + ∂x(∂x(u)) => ∂x_w_tag(u*u, central) + ∂x_w_
 # istree(AbstractExpression) = true; operation(Abst..) = *; arguments(::Abs..) = [...]
 
 b = Wrapper(1)
-
+##
 SymbolicUtils.istree(a::Add) = true
 SymbolicUtils.arguments(a::Add) = [a.arg1, a.arg2, a.context]
 SymbolicUtils.operation(a::Add) = +;
 SymbolicUtils.symtype(a) = Number
 
 (@rule +(~a,~b) => Add(~b, ~a, ~ctx))(Wrapper(1) + Wrapper(2))
-
-
+# (@rule +(~a,~b, ~ctx) => Add(~b, ~a, NonStandard()))(SymbolicUtils.to_symbolic(Wrapper(1) + Wrapper(2))) |> dump
+# (@rule b + b => b * b)(SymbolicUtils.to_symbolic(c))
+#(@rule b + b => b * b)(SymbolicUtils.to_symbolic(c)) |> typeof
+#SymbolicUtils.to_symbolic(Wrapper(1) + Wrapper(1)) |> dump
+#∂x = Sym{FnType{Tuple{Vararg{Any}}, Number}}(:∂x)
+#Fixpoint(Postwalk(Chain([@rule ∂x(u) => u])))(∂x(u))
+ using SymbolicUtils: Sym, FnType
 SymbolicUtils.istree(a::Multiply) = true
 SymbolicUtils.arguments(a::Multiply) = [a.arg1, a.arg2, a.context]
 SymbolicUtils.operation(a::Multiply) = +;
 SymbolicUtils.symtype(a) = Number
-
+b = Wrapper(1)
 (@rule b + b => b * b)(b+b)
 
 simplify()
 c = b+b
 
 symbolic = SymbolicUtils.to_symbolic(c)
-@rule 
+SymbolicUtils.to_symbolic(c) |> dump
+@rule
 
 reshape(a) = Symbolic{AbstractArray(reshape, a, (100,))
 
@@ -160,7 +166,6 @@ reshape(a) = Symbolic{AbstractArray(reshape, a, (100,))
 a + (b + c) -> label(a) + label(b) + label(c) 
 
 ClimaCtx() # SymbolicUtils ineraction context
-
 
 @syms a b c
 

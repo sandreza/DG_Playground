@@ -1,7 +1,7 @@
 using FFTW, BenchmarkTools, Plots
 include(pwd()*"/symbolics" * "/fourier_eval_rules.jl")
 # Test concrete implementation
-N = 2^8
+N = 2^3
 a, b = (0, 2π)
 x = fourier_nodes(a, b, N)
 k = fourier_wavenumbers(a, b, N)
