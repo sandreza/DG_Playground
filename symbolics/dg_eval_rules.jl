@@ -44,7 +44,9 @@ struct DGMetaData{𝒮, 𝒯, 𝒰}
     state::𝒯
     method::𝒰
 end
+
 ##
+
 # Derivatives
 dg_derivative(y::AbstractArray, md) = dg_derivative(md.mesh, y, md.state, md.method)
 dg_derivative(y::AbstractData, md) = dg_derivative(md.mesh, y.data, md.state, md.method)

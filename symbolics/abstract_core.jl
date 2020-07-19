@@ -48,7 +48,16 @@ for binary_operator in binary_operators
     @eval eval(a::$b_name{𝒮, 𝒯}) where {𝒮, 𝒯} = $b_symbol(eval(a.term1), eval(a.term2))
 
     @eval function Base.show(io::IO, operation::$b_name{𝒮, 𝒯}) where {𝒮, 𝒯}
-        print(io, "(", operation.term1, $b_symbol , operation.term2, ")")
+        # print(io, "(", operation.term1, $b_symbol , operation.term2, ")")
+        # clearly a great option
+        color_numbers = [30:33, 65:69, 136:142, 202:207]
+        choices = collect(Iterators.flatten(color_numbers))
+        color = 226 # rand(choices)
+        printstyled(io, "(", color = color)
+        print(io, operation.term1)
+        printstyled(io, $b_symbol, color = color )
+        print(io,  operation.term2)
+        printstyled(io, ")", color = color)
     end
 end
 
