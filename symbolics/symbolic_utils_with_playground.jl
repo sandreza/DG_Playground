@@ -1,7 +1,7 @@
 include(pwd() * "/symbolics/abstract_core.jl")
 
 using SymbolicUtils
-import SymbolicUtils: Chain, Postwalk, Sym, Term, istree, operation, arguments, to_symbolic
+import SymbolicUtils: Chain, Postwalk, Sym, Term, istree, operation, arguments, to_symbolic, Fixpoint
 
 # We are interpreting our structs as operations. This makes use of the Default constructor to work backwards in operations
 SymbolicUtils.istree(a::Add) = true
@@ -165,3 +165,24 @@ using Plots
 theme(:default)
 default(size=(400, 400))
 p1 = plot(expr_rhs, shape = :circle, fontsize=10, shorten=0.01, axis_buffer=0.15, title = "primitive")
+
+##
+# put code here?``
+c = u+u
+symb_c = SymbolicUtils.to_symbolic(c)
+r = @rule  ~x + ~y => ~x * ~y  # creates a function
+r1 = @rule ~x + ~x => ~x * ~x
+Postwalk(Chain([r1]))(symb_c)
+Postwalk(Chain([@rule ~a+~b => ~a*~b]))(symb_c)
+
+##
+# Example
+@syms x::Real y::Real z::Complex f(::Number)::Real
+r = @rule sinh(im * ~x) => sin(~x)
+
+ar1 = @acrule ∂x(~x, ~z) + ∂x(~y, ~z) => ∂x(~x + ~y, ~z)
+another_thing = SymbolicUtils.to_symbolic(∂x(u) + ∂x(u))
+Fixpoint(Postwalk(Chain([to_symbolic, ar1, @rule +(~x) => ~x])))(∂x(u) + ∂x(u))
+# ar1(symbolic_rhs) only applies the rule once
+
+# f(x+z,y) = f(x,y) + f(z,y)

@@ -65,3 +65,6 @@ end
 eval(Φ::AbstractData) = Φ
 # Field Eval
 eval(Φ::AbstractField) = Φ.data
+
+# TO work with symbolic utils and just a good idea anyway
+Base.isequal(a::AbstractExpression, b::AbstractExpression) = a === b
