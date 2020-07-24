@@ -1055,7 +1055,9 @@ version = "5.2.0+0"
 
 [[SymbolicUtils]]
 deps = ["AbstractAlgebra", "Combinatorics", "DataStructures", "NaNMath", "SpecialFunctions", "TimerOutputs"]
-path = "/Users/andresouza/.julia/dev/SymbolicUtils"
+git-tree-sha1 = "eea26a802dab03d4dd9939a89bb3eed9dca7ca65"
+repo-rev = "master"
+repo-url = "https://github.com/JuliaSymbolics/SymbolicUtils.jl.git"
 uuid = "d1185830-fcd6-423d-90d6-eec64667417b"
 version = "0.4.3"
 
