@@ -44,6 +44,37 @@ struct DGMetaData{𝒮, 𝒯, 𝒰}
     state::𝒯
     method::𝒰
 end
+#=
+# throw in right after reshape in compute_surface_terms
+function compute_boundary!(diffs, data, mesh, bc::Outflow{𝒮}, calculate::Function) where 𝒮
+    uin  =  data[mesh.vmapI]
+    uout =  data[mesh.vmapO] - 2.0 .* calculate(bc.out) # calculate(bc.out) is the flux on the boundary
+    diffs[mesh.mapI]  =  @. (data[mesh.vmapI] + uin)
+    diffs[mesh.mapO]  =  @. (data[mesh.vmapO] + uout)
+    return nothing
+end
+# perhaps
+
+abstract type AbstractBoundaryCondition end
+struct Periodic <: AbstractBoundaryCondition end
+scruct Left{𝒯} <: AbstractBoundaryCondition
+    left::𝒯
+end
+eval_ghost_flux(a::AbstractExpression) = eval(a)
+function eval_ghost_flux(ϕ::Field{𝒯, DGMetaData{𝒮, 𝒱, 𝒰, Left}}) where {𝒯, 𝒱, 𝒰, ℬ} 
+    uin  =  bc.out
+    uout =  bc.in
+    return Field([uin, uout], nothing)
+end
+
+function compute_boundary!(diffs, data, mesh, bc::Outflow{𝒮}, calculate::Function) where 𝒮
+    uin  =  data[mesh.vmapI]
+    uout =  data[mesh.vmapO] - 2.0 .* calculate(bc.out) # calculate(bc.out) is the flux on the boundary
+    diffs[mesh.mapI]  =  @. (data[mesh.vmapI] + uin)
+    diffs[mesh.mapO]  =  @. (data[mesh.vmapO] + uout)
+    return nothing
+end
+=#
 
 ##
 
