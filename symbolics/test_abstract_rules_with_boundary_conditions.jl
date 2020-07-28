@@ -1,5 +1,8 @@
 include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
-# bug eval(u *u * (u+u))
+# bug eval(u * u * (u+u))
+# just need to wrap things in data so that eval(field) = field.data
+# and that field.data remains a closed system
+# i.e. data * data should be data
 ##
 abstract type AbstractBoundaryCondition end
 struct BoundaryConditions{ℬ} <: AbstractBoundaryCondition
@@ -23,6 +26,7 @@ for binary_operator in binary_operators
     b_name, b_symbol = Meta.parse.(binary_operator)
     @eval eval_bc(a::$b_name{𝒮, 𝒯}) where {𝒮, 𝒯} = $b_symbol(eval_bc(a.term1), eval_bc(a.term2))
 end
+
 eval_bc(x) = x
 eval_bc(x::Field{S, T}) where {S <: Number, T} = x.data
 function eval_bc(x::Field)
@@ -93,6 +97,18 @@ u = Field(y_dg, field_md);
 κ = 0.001 # Diffusivity Constant
 ##
 # Burgers equation rhs
+rhs = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u))
 pde_equation = [
     u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u)),
 ]
+
+##
+# This is the resolution, one just needs to define an algebra on Data types
+struct Checking{T}
+    v::T
+end
+*(a::Checking, b::Checking) = Checking(broadcast(*, a.v , b.v))
+a = randn(1000)
+b = randn(1000)
+@btime a .* b;
+@btime Checking(a) * Checking(b);

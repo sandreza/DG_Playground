@@ -1,7 +1,7 @@
 using FFTW, BenchmarkTools, Plots
 include(pwd()*"/symbolics" * "/fourier_eval_rules.jl")
 # Test concrete implementation
-N = 2^3
+N = 2^7
 a, b = (0, 2π)
 x = fourier_nodes(a, b, N)
 k = fourier_wavenumbers(a, b, N)
@@ -29,7 +29,7 @@ function fourier_burgers!(v̇ , v, params, t)
     u = params[2]           # flux term
     κ = params[3]           # diffusion constant
     u.data.data .= real.(v)
-    v̇ .= eval(u̇)
+    v̇ .= compute(u̇)
     return nothing
 end
 

@@ -38,6 +38,6 @@ end
 
 fourier_derivative(y::AbstractData, P, k) = fourier_derivative(y.data, P, k)
 function eval(e::Gradient{𝒯, 𝒰}) where {𝒯, 𝒰 <: FourierMetaData}
-    return fourier_derivative(eval(e.operand), e.metadata.transform, e.metadata.k)
+    return Data(fourier_derivative(eval(e.operand), e.metadata.transform, e.metadata.k))
 end
 

@@ -80,7 +80,7 @@ end
 
 # Derivatives
 dg_derivative(y::AbstractArray, md) = dg_derivative(md.mesh, y, md.state, md.method)
-dg_derivative(y::AbstractData, md) = dg_derivative(md.mesh, y.data, md.state, md.method)
+dg_derivative(y::AbstractData, md) = dg_derivative(y.data, md)
 function eval(e::Gradient{𝒯, 𝒰}) where {𝒯, 𝒰 <: DGMetaData}
-    return dg_derivative(eval(e.operand), e.metadata)
+    return Data(dg_derivative(eval(e.operand), e.metadata))
 end

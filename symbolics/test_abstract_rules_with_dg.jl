@@ -66,7 +66,7 @@ function dg_burgers!(v̇ , v, params, t)
     pde_system = params[1]
     u = params[2]
     u.data.data .= real.(v)
-    v̇ .= eval(pde_system.equations[1].rhs)
+    v̇ .= compute(pde_system.equations[1].rhs)
     return nothing
 end
 
