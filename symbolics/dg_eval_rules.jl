@@ -60,7 +60,7 @@ struct Periodic <: AbstractBoundaryCondition end
 scruct Left{𝒯} <: AbstractBoundaryCondition
     left::𝒯
 end
-eval_ghost_flux(a::AbstractExpression) = eval(a)
+eval_ghost_flux(a::AbstractExpression) = eval(a).data
 function eval_ghost_flux(ϕ::Field{𝒯, DGMetaData{𝒮, 𝒱, 𝒰, Left}}) where {𝒯, 𝒱, 𝒰, ℬ} 
     uin  =  bc.out
     uout =  bc.in
