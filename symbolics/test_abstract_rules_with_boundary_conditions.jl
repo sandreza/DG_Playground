@@ -104,7 +104,8 @@ u = Field(y_dg, field_md);
 # Burgers equation rhs
 rhs = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u))
 pde_equation = [
-    u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u)),
+    σ == ∂xᶜ(u),
+    u̇ == -∂xᴿ(u * u * 0.5) + κ * ∂xᶜ(σ),
 ]
 
 ##

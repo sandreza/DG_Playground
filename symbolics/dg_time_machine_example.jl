@@ -59,48 +59,35 @@ pde_system = PDESystem(pde_equation,
 # expr = :(u̇ = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u));); 
 # to change expr.args[1].args[2].args[2].args[2].args[1] = :∂xᶜ; eval(expr)
 # ODE set up
-p = (pde_system, u);
+Δx = mesh.x[2] - mesh.x[1]
+dt = minimum([Δx^2 / κ * 0.05, abs(Δx / α)*0.05])
+p = (pde_system, u, dt);
 
-function dg_burgers!(v̇ , v, params, t)
+# function rhs!(du, u, param, t, α=true, β=false)
+#     @. du = $(α * cos(t)) * (a + b * u + c * u^2) + β * du
+# end
+
+function dg_burgers!(v̇, v, p, t, α = true, β = false)
     # unpack parameters
-    pde_system = params[1]
-    u = params[2]
+    pde_system = p[1]
+    u = p[2]
     u.data.data .= real.(v)
     v̇ .= compute(pde_system.equations[1].rhs)
-    return nothing
+    return v̇
 end
 
 rhs! = dg_burgers!
+dt *= 0.01
 tspan = (0.0, 20.0)
 
 # Define ODE problem
-ode_problem = (rhs!, u0, tspan, p);
 ##
-using DifferentialEquations
-prob = ODEProblem(ode_problem...);
+using TimeMachine
+using DiffEqBase
+prob = IncrementingODEProblem(rhs!, u0, tspan, p);
 # Solve it
-ode_method = RK4() # Heun(), RK4, Tsit5
-Δx = mesh.x[2] - mesh.x[1]
-dt = minimum([Δx^2 / κ * 0.05, abs(Δx / α)*0.05])
-sol  = solve(prob, ode_method, dt=dt, adaptive = false);
+ode_method = LSRK144NiegemannDiehlBusch()
+sol  = solve(prob, ode_method; dt=dt, adjustfinal=true);
 
-# Plot it
-##
-theme(:juno)
-nt =  length(sol.t)
-num = 40 # Number of Frames
-stp = floor(Int, nt/num)
-num = floor(Int, nt/stp)
-indices = stp * collect(1:num)
-pushfirst!(indices, 1)
-push!(indices, nt)
-for i in indices
-    plt = plot(x, real.(sol.u[i]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
-    plot!(x, real.(sol.u[1]), xlims = (Ω.a, Ω.b), ylims = (-1.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
-    display(plt)
-    sleep(0.1)
-end
-reference = sol.u[end]
-##
-plot(x, real.(sol.u[end]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
-plot!(ref_grid, ref_sol, xlims = (a, b), ylims = (-1.1,1.1), color = "blue", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box, line = 3, label = "Reference Solution")
+# TRY THIS
+v0 = copy(u0)

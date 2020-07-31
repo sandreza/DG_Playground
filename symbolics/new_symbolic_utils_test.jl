@@ -62,10 +62,23 @@ d = Postwalk(Chain([r1]))(c)
 ##
 u = Wrapper([1,1,1,1])
 ar1 = @acrule ∂x(~x, ~z) + ∂x(~y, ~z) => ∂x(~x + ~y, ~z)
-c = ∂x(u) + ∂x(u + ∂x(u) +∂x(u))
+c = ∂x(u) + ∂x( ∂x(u))
 d = Fixpoint(Postwalk(Chain([ar1])))(c)
+d = ∂x(u + ∂x(u))
 rhs3 = Fixpoint(Postwalk(Chain([ar1])))(rhs)
 isequal(rhs2, rhs3)
+u̇ = ∂x(u)
+∫dV(ϕ, u̇)  = -∫dV(ϕ, u) + ∫dA(ϕ, u)
+
+u̇ = Explicit(∂x(u), RK2) + Implicit(∂x( ∂x(u)), RK2)
+
+Q .= Qinit
+prob = IncrementingODEProblem(rhs!, Q, (t0, finaltime))
+solve(prob, method; dt=dt, adjustfinal=true)
+# should this be called evolve?
+evolve(prob, method; dt=dt, adjustfinal=true)
+
+# 
 #=
 function simplify(my_expr)
     standard_set_of_rules = [...]

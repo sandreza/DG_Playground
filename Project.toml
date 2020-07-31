@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
 FFTW = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 GraphRecipes = "bd48cda9-67a9-57be-86fa-5b3c104eda73"
@@ -20,3 +21,4 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 SymbolicUtils = "d1185830-fcd6-423d-90d6-eec64667417b"
+TimeMachine = "595c0a79-7f3d-439a-bc5a-b232dc3bde79"

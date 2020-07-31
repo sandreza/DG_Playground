@@ -229,9 +229,9 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[DiffEqBase]]
 deps = ["ArrayInterface", "ChainRulesCore", "ConsoleProgressMonitor", "DataStructures", "Distributed", "DocStringExtensions", "FunctionWrappers", "IterativeSolvers", "IteratorInterfaceExtensions", "LabelledArrays", "LinearAlgebra", "Logging", "LoggingExtras", "MuladdMacro", "Parameters", "Printf", "ProgressLogging", "RecipesBase", "RecursiveArrayTools", "RecursiveFactorization", "Requires", "Roots", "SparseArrays", "StaticArrays", "Statistics", "SuiteSparse", "TableTraits", "TerminalLoggers", "TreeViews", "ZygoteRules"]
-git-tree-sha1 = "e7e31a36de80ff2f94bdacd4d956cb6b67fcf0ef"
+git-tree-sha1 = "9ee99d9d293494d2cd61b47f8e87479018280134"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "6.40.7"
+version = "6.41.3"
 
 [[DiffEqCallbacks]]
 deps = ["DataStructures", "DiffEqBase", "ForwardDiff", "LinearAlgebra", "NLsolve", "OrdinaryDiffEq", "RecipesBase", "RecursiveArrayTools", "StaticArrays"]
@@ -629,6 +629,18 @@ git-tree-sha1 = "67f9a88611bc79f992aa705d9bbc833a2547dec7"
 uuid = "d8e11817-5142-5d16-987a-aa16d5891078"
 version = "0.3.1"
 
+[[MPI]]
+deps = ["Distributed", "DocStringExtensions", "Libdl", "MPICH_jll", "MicrosoftMPI_jll", "OpenMPI_jll", "Pkg", "Random", "Requires", "Serialization", "Sockets"]
+git-tree-sha1 = "0bd36605eea7a4d9c3ae0d7f21c10210dd54cb83"
+uuid = "da04e1cc-30fd-572f-bb4f-1f8673147195"
+version = "0.15.1"
+
+[[MPICH_jll]]
+deps = ["CompilerSupportLibraries_jll", "Libdl", "Pkg"]
+git-tree-sha1 = "4d37f1e07b4e2a74462eebf9ee48c626d15ffdac"
+uuid = "7cb0a576-ebde-5e09-9194-50597f1243b4"
+version = "3.3.2+10"
+
 [[MacroTools]]
 deps = ["Markdown", "Random"]
 git-tree-sha1 = "f7d2e3f654af75f01ec49be82c231c382214223a"
@@ -655,6 +667,12 @@ version = "2.16.6+1"
 git-tree-sha1 = "e498ddeee6f9fdb4551ce855a46f54dbd900245f"
 uuid = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
 version = "0.3.1"
+
+[[MicrosoftMPI_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "720de13004e416f2864c92593d3839e062703985"
+uuid = "9237b28f-5490-5468-be7b-bb81f5f5e6cf"
+version = "10.1.2+3"
 
 [[Missings]]
 deps = ["DataAPI"]
@@ -733,6 +751,12 @@ deps = ["CompilerSupportLibraries_jll", "Libdl", "Pkg"]
 git-tree-sha1 = "0c922fd9634e358622e333fc58de61f05a048492"
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
 version = "0.3.9+5"
+
+[[OpenMPI_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "41b983e26a7ab8c9bf05f7d70c274b817d541b46"
+uuid = "fe0851c0-eecd-5654-98d4-656369965a5c"
+version = "4.0.2+2"
 
 [[OpenSSL_jll]]
 deps = ["Libdl", "Pkg"]
@@ -1082,6 +1106,14 @@ version = "0.1.2"
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[[TimeMachine]]
+deps = ["CUDA", "DiffEqBase", "KernelAbstractions", "LinearAlgebra", "MPI", "StaticArrays"]
+git-tree-sha1 = "57f23918fe64c9f9fa95422dc60f8cb42f325e9f"
+repo-rev = "master"
+repo-url = "https://github.com/CliMA/TimeMachine.jl"
+uuid = "595c0a79-7f3d-439a-bc5a-b232dc3bde79"
+version = "0.0.0"
 
 [[TimerOutputs]]
 deps = ["Printf"]
