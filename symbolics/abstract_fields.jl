@@ -13,8 +13,12 @@ Field() = Field(nothing, nothing)
 Field(md::AbstractMetaData) = Field(nothing, md)
 
 # Interpret Numbers as special Fields
-*(a::Number, b::AbstractExpression)  = Multiply(Field(a, nothing), b)
-*(a::AbstractExpression, b::Number)  = Multiply(a, Field(b, nothing))
+for binary_operator in binary_operators
+    b_name, b_symbol = Meta.parse.(binary_operator)
+    @eval $b_symbol(a::Number, b::AbstractExpression) = $b_name(Field(a, nothing), b)
+    @eval $b_symbol(a::AbstractExpression, b::Number) = $b_name(a, Field(b, nothing))
+end
+
 
 
 

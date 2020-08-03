@@ -1,15 +1,21 @@
 # Define Operators (perhaps overload getproperty eventually?)
 import Base.show
-import Base: +, *, -
+import Base: +, *, -, √, tanh, sin, cos, tan, ^
 
 # Unary Operators, (name, symbol)
 unary_operators = []
 push!(unary_operators, ["Negative", "-"])
+push!(unary_operators, ["SquareRoot", "√"])
+push!(unary_operators, ["Tanh", "tanh"])
+push!(unary_operators, ["Sin", "sin"])
+push!(unary_operators, ["Cos", "cos"])
+push!(unary_operators, ["Tan", "tan"])
 
 # Binary Operators, (name, symbol)
 binary_operators = []
 push!(binary_operators, ["Add", "+"])
 push!(binary_operators, ["Multiply", "*"])
+push!(binary_operators, ["Exponentiation", "^"])
 
 # Define Abstract Types
 abstract type AbstractEquation end
