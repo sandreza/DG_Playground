@@ -1,4 +1,5 @@
-include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
+
+include(joinpath(@__DIR__, "dg_eval_rules.jl"))
 
 # Domain and Boundary
 Ω  = IntervalDomain(0, 2π, periodic = true)
@@ -72,7 +73,7 @@ function dg_burgers!(v̇, v, p, t, α = true, β = false)
     pde_system = p[1]
     u = p[2]
     u.data.data .= real.(v)
-    v̇ .= compute(pde_system.equations[1].rhs)
+    v̇ .= α * compute(pde_system.equations[1].rhs) + β * v̇
     return v̇
 end
 
@@ -87,7 +88,4 @@ using DiffEqBase
 prob = IncrementingODEProblem(rhs!, u0, tspan, p);
 # Solve it
 ode_method = LSRK144NiegemannDiehlBusch()
-sol  = solve(prob, ode_method; dt=dt, adjustfinal=true);
-
-# TRY THIS
-v0 = copy(u0)
+sol        = solve(prob, ode_method; dt=dt, adjustfinal=true);
