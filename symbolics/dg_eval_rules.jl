@@ -1,8 +1,8 @@
 using SparseArrays, BenchmarkTools, Plots
 
 include(joinpath(@__DIR__, "abstract_core.jl"))
-include("../src/HesthavenWarburton/utils.jl")
-include("../src/HesthavenWarburton/mesh.jl")
+include(joinpath(@__DIR__, "../src/HesthavenWarburton/utils.jl"))
+include(joinpath(@__DIR__, "../src/HesthavenWarburton/mesh.jl"))
 
 
 function create_mesh(Ω::IntervalDomain; elements = K, polynomial_order = n)
