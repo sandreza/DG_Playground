@@ -1,17 +1,8 @@
 include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
 ##
-abstract type AbstractBoundaryCondition end
-struct BoundaryConditions{ℬ} <: AbstractBoundaryCondition
-    bcs::ℬ
-end
-struct IntervalBoundaryCondition{ℬ, 𝒞} <: AbstractBoundaryCondition
-    boundary::ℬ
-    condition::𝒞
-end
-struct TransmissiveCondition <: AbstractBoundaryCondition end
-struct ValueBoundaryCondition{𝒱} <: AbstractBoundaryCondition
-    value::𝒱
-end
+# Structs for dispatch
+# Fluxes
+
 ## evaluate bc, need to define recursive rules
 
 for unary_operator in unary_operators
@@ -23,7 +14,6 @@ for binary_operator in binary_operators
     b_name, b_symbol = Meta.parse.(binary_operator)
     @eval eval_ghost(a::$b_name{𝒮, 𝒯}) where {𝒮, 𝒯} = $b_symbol(eval_ghost(a.term1), eval_ghost(a.term2))
 end
-
 # Rules for evaluating the ghost point, hacky since it uses DGMetaData
 # insteand of field meta data
 eval_ghost(x::Field{S, T}) where {S <: Number, T} = Data(x.data)
@@ -73,10 +63,6 @@ end
 # Domain and Boundary, fieldnames(typeof(∂Ω))
 Ω  = IntervalDomain(0, 2π, periodic = false)
 ∂Ω = ∂(Ω)
-
-bcL = IntervalBoundaryCondition(∂Ω.closure[1], ValueBoundaryCondition(1.0))
-bcR = IntervalBoundaryCondition(∂Ω.closure[2], ValueBoundaryCondition(0.0))
-bcs = BoundaryConditions((bcL, bcR))
 
 # Initial Condition
 u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);

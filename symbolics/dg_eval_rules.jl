@@ -3,15 +3,11 @@ using SparseArrays, BenchmarkTools, Plots
 include(joinpath(@__DIR__, "abstract_core.jl"))
 include(joinpath(@__DIR__, "../src/HesthavenWarburton/utils.jl"))
 include(joinpath(@__DIR__, "../src/HesthavenWarburton/mesh.jl"))
+include(joinpath(@__DIR__, "dg_flux_methods.jl"))
 
 
 function create_mesh(Ω::IntervalDomain; elements = K, polynomial_order = n)
     return Mesh(elements, polynomial_order, Ω.a, Ω.b, periodic = Ω.periodic)
-end
-
-# Define Numerical Flux Type
-struct Rusanov{𝒯}
-    α::𝒯
 end
 
 function compute_volume_terms(data::AbstractArray, mesh::Mesh)
