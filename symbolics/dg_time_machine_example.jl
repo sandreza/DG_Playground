@@ -1,4 +1,5 @@
-include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
+
+include(joinpath(@__DIR__, "dg_eval_rules.jl"))
 
 # Domain and Boundary
 Ω  = IntervalDomain(0, 2π, periodic = true)
@@ -63,21 +64,16 @@ pde_system = PDESystem(pde_equation,
 dt = minimum([Δx^2 / κ * 0.05, abs(Δx / α)*0.05])
 p = (pde_system, u, dt);
 
-# function rhs!(du, u, param, t, α=true, β=false)
-#     @. du = $(α * cos(t)) * (a + b * u + c * u^2) + β * du
-# end
-
 function dg_burgers!(v̇, v, p, t, α = true, β = false)
     # unpack parameters
     pde_system = p[1]
     u = p[2]
     u.data.data .= real.(v)
-    v̇ .= compute(pde_system.equations[1].rhs)
+    v̇ .= α * compute(pde_system.equations[1].rhs) + β * v̇
     return v̇
 end
 
 rhs! = dg_burgers!
-dt *= 0.01
 tspan = (0.0, 20.0)
 
 # Define ODE problem
@@ -87,7 +83,17 @@ using DiffEqBase
 prob = IncrementingODEProblem(rhs!, u0, tspan, p);
 # Solve it
 ode_method = LSRK144NiegemannDiehlBusch()
-sol  = solve(prob, ode_method; dt=dt, adjustfinal=true);
+solve(prob, ode_method; dt=dt, adjustfinal=true);
 
-# TRY THIS
-v0 = copy(u0)
+# Plot it
+##
+theme(:juno)
+plt = plot(
+    x,
+    u0,
+    xlims=(Ω.a, Ω.b),
+    ylims = (-1.1,1.1),
+    marker = 3,
+    leg = false,
+)
+display(plt)

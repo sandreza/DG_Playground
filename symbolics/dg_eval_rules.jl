@@ -1,7 +1,9 @@
 using SparseArrays, BenchmarkTools, Plots
-include(pwd() * "/symbolics/abstract_core.jl")
-include(pwd() * "/src" * "/HesthavenWarburton" * "/utils.jl")
-include(pwd() * "/src" * "/HesthavenWarburton" * "/mesh.jl")
+
+include(joinpath(@__DIR__, "abstract_core.jl"))
+include(joinpath(@__DIR__, "../src/HesthavenWarburton/utils.jl"))
+include(joinpath(@__DIR__, "../src/HesthavenWarburton/mesh.jl"))
+
 
 function create_mesh(Ω::IntervalDomain; elements = K, polynomial_order = n)
     return Mesh(elements, polynomial_order, Ω.a, Ω.b, periodic = Ω.periodic)

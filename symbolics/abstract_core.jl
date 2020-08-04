@@ -29,15 +29,15 @@ abstract type AbstractMetaData <: AbstractExpression end
 
 
 # Define Algebraic Operators
-include(pwd() * "/symbolics/abstract_operations.jl")
+include(joinpath(@__DIR__, "abstract_operations.jl"))
 # Define Domains
-include(pwd() * "/symbolics/abstract_domains.jl")
+include(joinpath(@__DIR__, "abstract_domains.jl"))
 # Define Fields
-include(pwd() * "/symbolics/abstract_fields.jl")
+include(joinpath(@__DIR__, "abstract_fields.jl"))
 # Define Data
-include(pwd() * "/symbolics/abstract_data.jl")
+include(joinpath(@__DIR__, "abstract_data.jl"))
 # Define equations and systems
-include(pwd() * "/symbolics/abstract_equations.jl")
+include(joinpath(@__DIR__, "abstract_equations.jl"))
 
 
 # Include Generic Evaluation Rules and Output Format
