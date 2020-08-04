@@ -378,7 +378,7 @@ The difficulty in enforcing this kind of boundary condition through numerical fl
 Let us focus on potential ways to enforce this boundary condition. One way is to interpret the equation as meaning
 ```math
 \begin{aligned}
-    \alpha \rho^*(1) + \beta \sigma^*(1) = \gamma.
+    \alpha \rho^*(1) + \beta \sigma^*(1) = \lambda.
 \end{aligned}
 ```
 Given that robin boundary conditions involve a linear combination of ``\rho`` and ``\sigma``, this is suggestive of making the transmissive flux a linear combination of ``\rho`` and ``\sigma`` as well. Thus, we will explore options of the form
@@ -404,14 +404,14 @@ The choice ``c=1``, ``d = 0``, leads to
 ```math
 \begin{aligned}
     \rho^* &= \rho^- \\
-    \sigma^* &= \frac{\gamma}{\alpha} - \frac{\beta}{\alpha} \rho^-
+    \sigma^* &= \frac{\lambda}{\alpha} - \frac{\beta}{\alpha} \rho^-
 \end{aligned}
 ```
 This is similar to how these boundary conditions are enforced in finite volume codes where one adds a relaxation term to the appropriate grid cell.
 The choice ``c = 0``, ``d = 1``, leads to
 ```math
 \begin{aligned}
-    \rho^* &= \frac{\gamma}{\beta} - \frac{\beta}{\alpha} \sigma^- \\
+    \rho^* &= \frac{\lambda}{\beta} - \frac{\beta}{\alpha} \sigma^- \\
     \sigma^* &= \sigma^-
 \end{aligned}
 ```
