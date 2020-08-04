@@ -362,7 +362,7 @@ Homogeneous Neumann boundary conditions for the present problem does not make to
 [Robin boundary conditions](https://en.wikipedia.org/wiki/Robin_boundary_condition) are boundary conditions of the form
 ```math
 \begin{aligned}
-    \alpha \rho(1) + \beta \sigma(1) = \gamma
+    \alpha \rho(1) + \beta \sigma(1) = \lambda
 \end{aligned}
 ```
 or similarly for the left endpoint. This kind of boundary condition comes up in the CLIMA Ocean code, when one has a relaxation to a surface temperature. In that context the boundary condition is
