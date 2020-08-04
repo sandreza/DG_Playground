@@ -1,8 +1,4 @@
 include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
-# bug eval(u * u * (u+u))
-# just need to wrap things in data so that eval(field) = field.data
-# and that field.data remains a closed system
-# i.e. data * data should be data
 ##
 abstract type AbstractBoundaryCondition end
 struct BoundaryConditions{ℬ} <: AbstractBoundaryCondition
@@ -16,7 +12,8 @@ struct TransmissiveCondition <: AbstractBoundaryCondition end
 struct ValueBoundaryCondition{𝒱} <: AbstractBoundaryCondition
     value::𝒱
 end
-## evaluate bc
+## evaluate bc, need to define recursive rules
+
 for unary_operator in unary_operators
     b_name, b_symbol = Meta.parse.(unary_operator)
     @eval eval_ghost(a::$b_name{𝒮}) where {𝒮} = $b_symbol(eval_ghost(a.term))
@@ -29,7 +26,6 @@ end
 
 # Rules for evaluating the ghost point, hacky since it uses DGMetaData
 # insteand of field meta data
-eval_ghost(x) = x
 eval_ghost(x::Field{S, T}) where {S <: Number, T} = Data(x.data)
 function eval_ghost(x::Field)
     # automatically assumes the kind of boundary condition
@@ -96,13 +92,15 @@ central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
 y_dg = Data(u0);
 u̇ = Data(nothing);
+σ = Data(nothing);
 u = Field(y_dg, field_md);
 ∂xᶜ(a::AbstractExpression) = Gradient(a, central);
 ∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
 κ = 0.001 # Diffusivity Constant
 ##
 # Burgers equation rhs
-rhs = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u))
+rhs = -∂xᴿ(u * u * 0.5)  +  ∂xᶜ(κ * ∂xᶜ(u))
+rhs2 = -∂xᴿ(u * u * 0.5)  + κ *  ∂xᶜ(∂xᶜ(u))
 pde_equation = [
     σ == ∂xᶜ(u),
     u̇ == -∂xᴿ(u * u * 0.5) + κ * ∂xᶜ(σ),
@@ -162,10 +160,3 @@ end
 =#
 
 ##
-
-# Derivatives
-dg_derivative(y::AbstractArray, md) = dg_derivative(md.mesh, y, md.state, md.method)
-dg_derivative(y::AbstractData, md) = dg_derivative(y.data, md)
-function eval(e::Gradient{𝒯, 𝒰}) where {𝒯, 𝒰 <: DGMetaData}
-    return Data(dg_derivative(eval(e.operand), e.metadata))
-end
