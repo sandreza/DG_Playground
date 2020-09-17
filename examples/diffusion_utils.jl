@@ -1,9 +1,10 @@
+const κ = 1e-2
 function calculate_hyperbolic_flux(x::AbstractArray)
     return x
 end
 
 function calculate_parabolic_flux(x::AbstractArray)
-    return x
+    return κ .* x
 end
 
 function calculate_hyperbolic_flux(x::Number)
@@ -11,7 +12,7 @@ function calculate_hyperbolic_flux(x::Number)
 end
 
 function calculate_parabolic_flux(x::Number)
-    return x
+    return κ * x
 end
 
 # Define right hand side of the differential equation
@@ -21,7 +22,7 @@ function diffusion!(u̇, u, params, t)
     Φ = params[2]           # flux term
     ∇Φ = params[3]          # diffusive state
     Φ.state .= u            # update state
-    q = ∇⊗Φ                 # calculate gradient
+    q = ∇⋅Φ                 # calculate gradient
     ∇Φ.state .= q           # store gradient
     tmp =  ∇⋅∇Φ             # calculate tendency
     @. u̇ = tmp              # store it

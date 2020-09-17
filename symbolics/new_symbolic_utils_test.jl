@@ -61,7 +61,8 @@ c = u+u
 d = Postwalk(Chain([r1]))(c)
 ##
 u = Wrapper([1,1,1,1])
-ar1 = @acrule ∂x(~x, ~z) + ∂x(~y, ~z) => ∂x(~x + ~y, ~z)
+operator_splitting_rule = @acrule ∂x(~x * ~y, z) => 0.5(~x * ∂x(~y, z) + ~y * ∂x(~x, z) ) + 0.5 * (∂x(~x * ~y, z))
+ar1 = @acrule ∂x(~x * , ~z) + ∂x(~y, ~z) => ∂x(~x + ~y, ~z)
 c = ∂x(u) + ∂x( ∂x(u))
 d = Fixpoint(Postwalk(Chain([ar1])))(c)
 d = ∂x(u + ∂x(u))

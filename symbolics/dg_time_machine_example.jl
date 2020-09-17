@@ -1,25 +1,10 @@
-
-include(joinpath(@__DIR__, "dg_eval_rules.jl"))
-
+include(pwd() * "/symbolics/dg_eval_rules.jl")
+##
 # Domain and Boundary
 Ω  = IntervalDomain(0, 2π, periodic = true)
 ∂Ω = ∂(Ω)
-
 # Initial Condition
 u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
-
-# DG Objects set up
-# (TODO: need to work out how to organize the DGModel)
-# 
-# struct DGModel
-#     pde_system
-#     mesh
-#     metadata
-# end
-#
-# metadata = Dict("first_order_flux"    => (rusanov,),
-#                 "second_order_fluxes" => (central, central))
-# dgmodel = DGModel(pde_system, mesh, metadata)
 
 K = 8      # Number of elements
 n = 1      # Polynomial Order
@@ -39,23 +24,25 @@ u = Field(y_dg, field_md);
 
 # Burgers equation rhs
 pde_equation = [
-    u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u)),
+    Explicit(u̇, RK2) == Explicit(-∂xᴿ(u * u * 0.5), RK2)  + Implicit(κ * ∂xᶜ(∂xᶜ(u)), RK2),
 ]
-# GalerkinMethod <: AbstractSpatialDiscretization
-# ElementGalerkin <: GalerkinMethod
-# DiscontinuousGalerkin <: ElementGalerkin
 
-# "method_type" => "galerkin"
-# "galerkin_type" => "element"
-# "element_galerkin_type" => "discontinuous"
+pde_equation = [
+    σ == ∂xᶜ(u),
+    u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(σ)
+]
 
-pde_meta_data = Dict("name" => "Burgers Equation", "method" => "discontinuous Galerkin")
+rhs =  -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u))
+-∂xᴿ(u * u * 0.5) = first_order_terms(rhs)
+κ * ∂xᶜ(σ) = aux_variables(rhs)
+
+pde_meta_data = Dict("name" => "Burgers Equation", 
+                    "method" => "discontinuous Galerkin")
 pde_system = PDESystem(pde_equation,
                        Ω;
                        initial_condition=u0,
                        bcs=nothing,
-                       metadata=pde_meta_data)
-
+                       metadata=pde_meta_data,)
 ##
 # expr = :(u̇ = -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u));); 
 # to change expr.args[1].args[2].args[2].args[2].args[1] = :∂xᶜ; eval(expr)
@@ -75,7 +62,6 @@ end
 
 rhs! = dg_burgers!
 tspan = (0.0, 20.0)
-
 # Define ODE problem
 ##
 using TimeMachine
