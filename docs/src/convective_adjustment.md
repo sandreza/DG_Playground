@@ -28,10 +28,9 @@ where `` \kappa_1 \gg \kappa_2 ``, `` z `` is aligned with the direction of grav
  Thinking of ``\rho`` as density, a simple parameterization of convection is of the form
 ```math
 \begin{aligned}
-\partial_t \rho &= \nabla \cdot \left[ \kappa(\rho) \odot \nabla \rho \right]
+\partial_t \rho &= \nabla \cdot \left[ \kappa(\rho) \cdot \nabla \rho \right]
 \end{aligned},
 ```
-where ``\odot`` is denotes a [Hadamard product](https://en.wikipedia.org/wiki/Hadamard_product_(matrices)).
 Intuitively, the above nonlinear diffusivity models the effect of mixing when heavy fluid parcels overlie light fluid parcels. Here the  mixing is modeled via diffusion with a large diffusivity constant. This is by no means the only way to model the effect of mixing, but it is a starting point.
 
 ## Typical Time-Discretization
@@ -48,7 +47,7 @@ Letting,
 a typical time-discretization would be
 ```math
 \begin{aligned}
-\rho^{n+1} - \Delta t \partial_z \left[ \kappa_{zz}(\rho^{n}) \partial_z \rho^{n+1} \right] &= \rho^{n} + \Delta t \left( f^n + \nabla^H \cdot \left[ \kappa_H(\rho^n) \odot \nabla^H \rho^n \right] \right)
+\rho^{n+1} - \Delta t \partial_z \left[ \kappa_{zz}(\rho^{n}) \partial_z \rho^{n+1} \right] &= \rho^{n} + \Delta t \left( f^n + \nabla^H \cdot \left[ \kappa_H(\rho^n) \cdot \nabla^H \rho^n \right] \right)
 \end{aligned}
 ```
 where the forcing function `` f^n `` comes from boundary condition and we have split the gradient operator into the vertically aligned component ``z`` and the other (horizontal) directions. When discretized, the time-stepping method yields a [Helmholtz](https://en.wikipedia.org/wiki/Helmholtz_equation)-like problem that needs to be solved every timestep. The reason why it is not exactly a Helmholtz-like problem is due to the use of inexact quadrature for variable diffusivity. In this context, inexact quadrature means that, instead of projecting nonlinear terms onto the appropriate basis, we multiply them together at the collocation points.
