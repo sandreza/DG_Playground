@@ -56,13 +56,16 @@ num = floor(Int, nt/step)
 indices = step * collect(1:num)
 pushfirst!(indices, 1)
 push!(indices, nt)
-for i in indices
+anim = @animate for i in indices
+    day_label = @sprintf("%.2f ", sol.t[i] ./ 86400)
     plt = plot(sol.u[i], 𝒢.x, ylims=(xmin, xmax), xlims = (0.0,ΔT), marker = 3,    leg = false)
     plot!(sol.u[1], 𝒢.x,  color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     plot!(xlabel = "Temperature", ylabel = "Depth")
+    plot!(title = "Temperature at t = " * day_label * "days")
     display(plt)
     sleep(0.1)
 end
+gif(anim, "ocean_simulat.gif")
 
 ##
 plot(sol.u[2], 𝒢.x,  color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
