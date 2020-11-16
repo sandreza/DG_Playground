@@ -19,11 +19,19 @@ u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
 # metadata = Dict("first_order_flux"    => (rusanov,),
 #                 "second_order_fluxes" => (central, central))
 # dgmodel = DGModel(pde_system, mesh, metadata)
-
-K = 8      # Number of elements
-n = 1      # Polynomial Order
+inexact = false
+K = 6      # Number of elements
+n = 8      # Polynomial Order
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
 x = mesh.x
+if inexact
+    DM = Diagonal(sum(mesh.M, dims = 1)[:])
+    mesh.M .= DM
+    mesh.Mi .= inv(DM)
+    mesh.lift[:,1] .= mesh.Mi[1,:]
+    mesh.lift[:,end] .= mesh.Mi[end,:]
+end
+
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
 α = 0.2; # Rusanov parameter
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
@@ -82,6 +90,7 @@ prob = ODEProblem(ode_problem...);
 ode_method = RK4() # Heun(), RK4, Tsit5
 Δx = mesh.x[2] - mesh.x[1]
 dt = minimum([Δx^2 / κ * 0.05, abs(Δx / α)*0.05])
+dt *= 0.1
 sol  = solve(prob, ode_method, dt=dt, adaptive = false);
 
 # Plot it
@@ -94,13 +103,18 @@ num = floor(Int, nt/stp)
 indices = stp * collect(1:num)
 pushfirst!(indices, 1)
 push!(indices, nt)
-for i in indices
+anim = @animate  for i in indices
     plt = plot(x, real.(sol.u[i]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
     plot!(x, real.(sol.u[1]), xlims = (Ω.a, Ω.b), ylims = (-1.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
-    display(plt)
-    sleep(0.1)
+    #display(plt)
+    #sleep(0.1)
 end
 reference = sol.u[end]
+if inexact
+    gif(anim, "burgers_inexact_2.gif")
+else
+    gif(anim, "burgers_inexact_1.gif")
+end
 ##
 plot(x, real.(sol.u[end]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
 plot!(ref_grid, ref_sol, xlims = (a, b), ylims = (-1.1,1.1), color = "blue", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box, line = 3, label = "Reference Solution")
