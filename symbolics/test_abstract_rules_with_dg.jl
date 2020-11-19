@@ -6,24 +6,15 @@ include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
 
 # Initial Condition
 u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
-
-# DG Objects set up
-# (TODO: need to work out how to organize the DGModel)
-# 
-# struct DGModel
-#     pde_system
-#     mesh
-#     metadata
-# end
-#
-# metadata = Dict("first_order_flux"    => (rusanov,),
-#                 "second_order_fluxes" => (central, central))
-# dgmodel = DGModel(pde_system, mesh, metadata)
-inexact = false
-K = 6      # Number of elements
-n = 8      # Polynomial Order
+u⁰(x, a, b) = (tanh((x-3(b+a)/8)/0.01)+1)*(tanh(-(x-5(b+a)/8)/0.01)+1)/4
+c = 2π/10
+inexact = true
+cfl = 0.25
+K = 30     # Number of elements
+n = 4     # Polynomial Order
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
 x = mesh.x
+plot(x, u⁰.(x, Ω.a,  Ω.b))
 if inexact
     DM = Diagonal(sum(mesh.M, dims = 1)[:])
     mesh.M .= DM
@@ -33,7 +24,7 @@ if inexact
 end
 
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
-α = 0.2; # Rusanov parameter
+α = 0.1; # Rusanov parameter
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
 central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
@@ -42,19 +33,12 @@ u̇ = Data(nothing);
 u = Field(y_dg, field_md);
 ∂xᶜ(a::AbstractExpression) = Gradient(a, central);
 ∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
-κ = 0.001 # Diffusivity Constant
+κ = 1e-4 # Diffusivity Constant
 
 # Burgers equation rhs
 pde_equation = [
-    u̇ == -∂xᴿ(u * u * 0.5)  + κ * ∂xᶜ(∂xᶜ(u)),
+    u̇ == -∂xᴿ(u * c)  + κ * ∂xᶜ(∂xᶜ(u)),
 ]
-# GalerkinMethod <: AbstractSpatialDiscretization
-# ElementGalerkin <: GalerkinMethod
-# DiscontinuousGalerkin <: ElementGalerkin
-
-# "method_type" => "galerkin"
-# "galerkin_type" => "element"
-# "element_galerkin_type" => "discontinuous"
 
 pde_meta_data = Dict("name" => "Burgers Equation", "method" => "discontinuous Galerkin")
 pde_system = PDESystem(pde_equation,
@@ -89,15 +73,14 @@ prob = ODEProblem(ode_problem...);
 # Solve it
 ode_method = RK4() # Heun(), RK4, Tsit5
 Δx = mesh.x[2] - mesh.x[1]
-dt = minimum([Δx^2 / κ * 0.05, abs(Δx / α)*0.05])
-dt *= 0.1
+dt = minimum([Δx^2 / κ * cfl, abs(Δx / α) * cfl, abs(Δx / maximum(abs.(u0))) * cfl ])
 sol  = solve(prob, ode_method, dt=dt, adaptive = false);
 
 # Plot it
 ##
 theme(:juno)
 nt =  length(sol.t)
-num = 40 # Number of Frames
+num = 20 # Number of Frames
 stp = floor(Int, nt/num)
 num = floor(Int, nt/stp)
 indices = stp * collect(1:num)
@@ -106,15 +89,14 @@ push!(indices, nt)
 anim = @animate  for i in indices
     plt = plot(x, real.(sol.u[i]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
     plot!(x, real.(sol.u[1]), xlims = (Ω.a, Ω.b), ylims = (-1.1,1.1), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
-    #display(plt)
-    #sleep(0.1)
+    display(plt)
+    sleep(0.05)
 end
 reference = sol.u[end]
 if inexact
     gif(anim, "burgers_inexact_2.gif")
 else
     gif(anim, "burgers_inexact_1.gif")
-end
-##
+end##
 plot(x, real.(sol.u[end]), xlims=(Ω.a, Ω.b), ylims = (-1.1,1.1), marker = 3,  leg = false)
 plot!(ref_grid, ref_sol, xlims = (a, b), ylims = (-1.1,1.1), color = "blue", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box, line = 3, label = "Reference Solution")
