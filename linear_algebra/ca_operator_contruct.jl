@@ -160,11 +160,12 @@ diag(L2)
 xmin = 0.0 # left endpoint of domain
 xmax = L   # right endpoint of domain
 # 60, (n, K) = (30, 1) , (20, 2), (15, 3), (12, 4), (10, 5)
-K = 10
-n = 5
+K = 12
+n = 4
 G = Mesh(K, n, xmin, xmax) # Generate Mesh
 mass_matrix = false
-constructor(h) = ca_operator_constructor(h, -1, κ¹, κ², L, K, n, μ = 0.0, inexact = false, freeflux = false, periodic = true, mass_matrix = mass_matrix)
+inexact = true
+constructor(h) = ca_operator_constructor(h, -1, κ¹, κ², L, K, n, μ = 0.0, inexact = inexact, freeflux = false, periodic = true, mass_matrix = mass_matrix)
 Δ = constructor(L/2)[1]
 if mass_matrix
     Δ = Symmetric(Δ)
