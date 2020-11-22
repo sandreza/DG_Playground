@@ -10,13 +10,14 @@ u⁰(x, a, b; ν = 0.001) = (tanh((x-3(b+a)/8)/ν)+1)*(tanh(-(x-5(b+a)/8)/ν)+1)
 u⁰(x,a,b) = sin(2π/(b-a) * x) + 0.5
 c = 2π/10
 T = 1*1.5 #20 # 1.5 for burgers
-inexact = false
+inexact = true
 cfl = 0.3
-K = 80    # Number of elements
+K = 10    # Number of elements
 n = 1    # Polynomial Order
 exact_nonlinear = false
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
 x = mesh.x
+Δx = x[2] - x[1]
 plot(x, u⁰.(x, Ω.a,  Ω.b))
 if inexact
     DM = Diagonal(sum(mesh.M, dims = 1)[:])
@@ -27,7 +28,7 @@ if inexact
 end
 
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
-α = 1.5/1; # Rusanov parameter
+α = 1.5*1; # Rusanov parameter
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
 central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
@@ -105,7 +106,6 @@ using DifferentialEquations
 prob = ODEProblem(ode_problem...);
 # Solve it
 ode_method = Heun() # Heun(), RK4, Tsit5, Feagin14()
-Δx = mesh.x[2] - mesh.x[1]
 sol  = solve(prob, ode_method, dt=dt, adaptive = false);
 
 # Plot it
@@ -128,7 +128,7 @@ filter[2,2] = 0
 linearfilter = V * filter * inv(V)
 anim = @animate  for i in indices
     ylims = (minimum(sol.u[1])-0.1*maximum(sol.u[1]), maximum(sol.u[1]) + 0.1*maximum(sol.u[1]))
-    plt = plot(x,  real.(sol.u[i])[(n+2):end,:], color = :green, xlims=(Ω.a, Ω.b), ylims = ylims,  linewidth = 2.0, leg = false)
+    plt = plot(x, real.(sol.u[i])[(n+2):end,:], xlims=(Ω.a, Ω.b), ylims = ylims,  linewidth = 2.0, leg = false)
     plot!(x,  real.(sol.u[1])[(n+2):end,:], xlims = (Ω.a, Ω.b), ylims = ylims, color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     #plt = plot(x, real.(sol.u[i])[1:(n+1),:],ylims = (0, kmax), xlims = (Ω.a, Ω.b), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     display(plt)
