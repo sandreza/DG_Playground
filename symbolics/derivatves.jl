@@ -41,6 +41,27 @@ r = jacobiGL(0, 0, n)
 V = vandermonde(r, 0, 0, n)
 filter = Diagonal(zeros(n+1))
 filter[1] = 1
-filter[2,2] = 0
+filter[2,2] = 1
+filter[3,3] = 0
+filter[4,4] = 0
 linearfilter = V * filter * inv(V)
-plot(x, linearfilter*data)
+plot(x, linearfilter*data,label = false)
+plot!(x, data, color = :blue, label = false)
+
+##
+# Legendre Mode Amplitudes
+lns(x) = log10(abs(x))
+p= []
+push!(p,scatter(lns.(inv(V) * data[:,1]), label = false, title = "K= " * string(1) ))
+# label = "element " * string(1)) 
+for i in 2:K
+    push!(p,scatter(lns.(inv(V) * data[:,i]), label = false, title = "K= " * string(i) ))
+end
+ps = plot(p[1:K]...)
+pn = plot(x, data,  label = false)
+plot(ps,pn)
+
+quant = sum(abs.(spectrum[2:3,:]), dims =1) ./ 5
+abs.(spectrum[4,:]) .> quant[:]
+abs.(spectrum[5,:]) .> quant[:]
+abs.(spectrum[6,:]) .> quant[:]

@@ -12,11 +12,15 @@ c = 2π/10
 T = 1*1.5 #20 # 1.5 for burgers
 inexact = true
 cfl = 0.3
-K = 80    # Number of elements
+K = 100    # Number of elements
 n = 1    # Polynomial Order
+r = jacobiGL(0, 0, n)
+V = vandermonde(r, 0, 0, n)
 exact_nonlinear = false
+timestepfilter = false
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
 x = mesh.x
+# mesh.D .= mesh.D * linearfilter
 Δx = x[2] - x[1]
 plot(x, u⁰.(x, Ω.a,  Ω.b))
 if inexact
@@ -94,9 +98,25 @@ function dg_burgers!(v̇ , v, params, t)
         ∫dA2 = -0.5 * compute_surface_terms(u².metadata.mesh, u².data.data, l_u, Rusanov(α))
         v̇[(n+2):end,:] .= compute(pde_system.equations[2].rhs) + ∫dA1 - ∫dA2
     else
+            if timestepfilter
+        filteredthing = u².data.data
+        spectrum = inv(V)*filteredthing
+        if n > 2
+            for j in 1:K
+                for jj in 3:(n+1)
+                    criteria = (abs.(spectrum[jj-1,j]) + abs.(spectrum[jj-2,j]))/2
+                    if abs.(spectrum[jj,j]) > criteria
+                        spectrum[jj,j] *= (0.9)^jj
+                    end
+                end
+            end
+        end
+        u².data.data .= V * spectrum
+    end
         v̇[1:(n+1),:] .= compute(pde_system.equations[1].rhs)
         v̇[(n+2):end,:] .= compute(pde_system.equations[2].rhs)
     end
+
     return nothing
 end
 
@@ -126,18 +146,30 @@ pushfirst!(indices, 1)
 push!(indices, nt)
 #filtersolution
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n)
-r = jacobiGL(0, 0, n)
-V = vandermonde(r, 0, 0, n)
-filter = Diagonal(zeros(n+1))
-filter[1] = 1
-filter[2,2] = 0
+diagfilter = ones(n+1)
+diagfilter[1] = 1
+if n+1>=3
+    diagfilter[3:end] = exp.(-0.01*(collect(3:1:n+1) .- 2.1 ))
+end
+filter = Diagonal(diagfilter)
 linearfilter = V * filter * inv(V)
-anim = @animate  for i in indices
+# anim = @animate  
+for i in indices
     ylims = (minimum(sol.u[1])-0.1*maximum(sol.u[1]), maximum(sol.u[1]) + 0.1*maximum(sol.u[1]))
-    plt = plot(x, real.(sol.u[i])[(n+2):end,:], xlims=(Ω.a, Ω.b), ylims = ylims,  linewidth = 2.0, leg = false)
+    plt = plot(x, linearfilter * real.(sol.u[i])[(n+2):end,:], xlims=(Ω.a, Ω.b), ylims = ylims,  linewidth = 2.0, leg = false)
     plot!(x,  real.(sol.u[1])[(n+2):end,:], xlims = (Ω.a, Ω.b), ylims = ylims, color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     #plt = plot(x, real.(sol.u[i])[1:(n+1),:],ylims = (0, kmax), xlims = (Ω.a, Ω.b), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
+    data = sol.u[i][(n+2):end,:]
+    # Legendre Mode Amplitudes
+    p = []
+    push!(p,scatter(log10.(abs.(inv(V) * data[:,1])), label = false ))
+    # label = "element " * string(1)) 
+    for j in 2:K
+        push!(p,scatter(log10.(abs.(inv(V) * data[:,j])), label = false ))
+    end
+    plt2 = plot(p[1:K]...)
     display(plt)
+    #display(plt2)
     sleep(0.05)
 end
 ##
