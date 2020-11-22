@@ -12,7 +12,7 @@ c = 2π/10
 T = 1*1.5 #20 # 1.5 for burgers
 inexact = true
 cfl = 0.3
-K = 10    # Number of elements
+K = 80    # Number of elements
 n = 1    # Polynomial Order
 exact_nonlinear = false
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
@@ -28,7 +28,7 @@ if inexact
 end
 
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
-α = 1.5*1; # Rusanov parameter
+α = 1.5; # Rusanov parameter
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
 central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
@@ -73,24 +73,30 @@ function dg_burgers!(v̇ , v, params, t)
     n = params[4]
     pde_system.equations[1].lhs.data .=  real.(v[1:(n+1),:])
     pde_system.equations[2].lhs.data .= real.(v[(n+2):end,:])
-    u = pde_system.equations[2].lhs.data
-    u².data.data .= u .* u
+    l_u = pde_system.equations[2].lhs.data
+    u².data.data .= l_u .* l_u
+    # modify for exact nonlinear
     if (n==1) & exact_nonlinear
-    ω1 = 5/6
-    ω2 = 1/3  
-    if inexact
-        ω1 = 1/2
-        ω2 = 1/3
+        v̇[1:(n+1),:] .= compute(pde_system.equations[1].rhs)
+        ω1 = 5/6
+        ω2 = 1/3  
+        if inexact
+            ω1 = 1/2
+            ω2 = 1/3
+        end
+        ω3 = 1 - ω1 - ω2
+        for i in 1:K
+            u².data.data[1,i]  =  ω1*l_u[1,i]*l_u[1,i] + ω2*l_u[1,i]*l_u[end,i] + ω3*l_u[end,i]*l_u[end,i]
+            u².data.data[end,i] = ω3*l_u[1,i]*l_u[1,i] + ω2*l_u[1,i]*l_u[end,i] + ω1*l_u[end,i]*l_u[end,i]
+        end
+        # the above modifies the volume nodes, the surface nodes stay with the same estimate
+        ∫dA1 = -0.5 * compute_surface_terms(u².metadata.mesh, l_u .* l_u, l_u, Rusanov(α))
+        ∫dA2 = -0.5 * compute_surface_terms(u².metadata.mesh, u².data.data, l_u, Rusanov(α))
+        v̇[(n+2):end,:] .= compute(pde_system.equations[2].rhs) + ∫dA1 - ∫dA2
+    else
+        v̇[1:(n+1),:] .= compute(pde_system.equations[1].rhs)
+        v̇[(n+2):end,:] .= compute(pde_system.equations[2].rhs)
     end
-    ω3 = 1 - ω1 - ω2
-    for i in 1:K
-        u².data.data[1,i]  =  ω1*u[1,i]*u[1,i] + ω2*u[1,i]*u[end,i] + ω3*u[end,i]*u[end,i]
-        u².data.data[end,i] = ω3*u[1,i]*u[1,i] + ω2*u[1,i]*u[end,i] + ω1*u[end,i]*u[end,i]
-    end
-end
-     
-    v̇[1:(n+1),:] .= compute(pde_system.equations[1].rhs)
-    v̇[(n+2):end,:] .= compute(pde_system.equations[2].rhs)
     return nothing
 end
 

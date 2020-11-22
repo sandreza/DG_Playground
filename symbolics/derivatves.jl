@@ -14,8 +14,6 @@ end
 
 method = u.metadata.method
 ∫dV = compute_volume_terms(data, mesh)
-
-
 ∫dA = compute_surface_terms(mesh, data, state, Rusanov(0))
 
 if inexact
