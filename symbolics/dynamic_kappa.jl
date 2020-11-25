@@ -1,21 +1,22 @@
 include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
-
 # Domain and Boundary
 Ω  = IntervalDomain(0, 2π, periodic = true)
 ∂Ω = ∂(Ω)
 
 # Initial Condition
 u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
-u⁰(x, a, b; ν = 0.001) = (tanh((x-3(b+a)/8)/ν)+1)*(tanh(-(x-5(b+a)/8)/ν)+1)/4
-u⁰(x,a,b) = sin(2π/(b-a) * x) + 0.5
-c = 2π/10
-T = 1*1.5 #20 # 1.5 for burgers
-inexact = true
+u⁰(x, a, b; ν = 0.0001) = (tanh((x-3(b+a)/8)/ν)+1)*(tanh(-(x-5(b+a)/8)/ν)+1)/4 * (0.1*sin(40π/(b-a) * x) +2)
+#u⁰(x,a,b) = sin(2π/(b-a) * x) + 0.5
+c = 1.5
+T = 4π/1.5# 1.5 #1.5π # 1.5 for burgers
+inexact = false
 cfl = 0.3
-K = 100    # Number of elements
-n = 1    # Polynomial Order
+K = 300   # Number of elements
+n = 4    # Polynomial Order
 r = jacobiGL(0, 0, n)
 V = vandermonde(r, 0, 0, n)
+
+flux_limiter = false
 exact_nonlinear = false
 timestepfilter = false
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
@@ -31,29 +32,32 @@ if inexact
     mesh.lift[:,end] .= mesh.Mi[end,:]
 end
 
+##
+
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
-α = 1.5; # Rusanov parameter
+α = 1.5/2#1.5/2; # Rusanov parameter
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
 central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
 u̇ = Data(u0);
 u = Field(Data(u0), field_md);
 u² = Field(Data(u0 .* u0), field_md);
-κbase = 1e-8 # Diffusivity Constant
+κbase = minimum([1.5e-8, Δx * α ]) # Diffusivity Constant
 κ0 = x .* 0 .+ κbase
-kmax = 1e-2
+kmax = Δx * α
 κ̇ = Data(κ0);
 κ = Field(Data(κ0) , field_md);
 ∂xᶜ(a::AbstractExpression) = Gradient(a, central);
 ∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
 dt = minimum([Δx^2 / maximum(kmax) * cfl, abs(Δx / α) * cfl, abs(Δx / maximum(abs.(u0))) * cfl ])
-λ = 0.1/(dt) # 1.0 / dt makes it change immediately every timstep
+λ = 0.9/(dt) # 1.0 / dt makes it change immediately every timstep
 
-smoothness = tanh(∂xᶜ(u)^2*0.01) # 0 for smooth, 1 for unsmooth
+# minimum grid spacing  / 2*expected linfinity
+smoothness = tanh((∂xᶜ(u)*(Δx/(α+eps(1.0))))^2) # 0 for smooth, 1 for unsmooth
 # Burgers equation rhs, 
 pde_equation = [
-    κ̇ == -λ*(κ + (-κbase + 1 * (-kmax) * smoothness)) ,
-    u̇ == -∂xᴿ(u²)*0.5  + ∂xᶜ( κ * ∂xᶜ(u)),
+    κ̇ == -λ*(κ + (-κbase + 1 * (-kmax+κbase) * smoothness)) ,
+    u̇ == -∂xᴿ(u*c)*0.5  + ∂xᶜ( κ * ∂xᶜ(u)),
 ]
 
 pde_meta_data = Dict("name" => "Burgers Equation", "method" => "discontinuous Galerkin")
@@ -115,6 +119,20 @@ function dg_burgers!(v̇ , v, params, t)
     end
         v̇[1:(n+1),:] .= compute(pde_system.equations[1].rhs)
         v̇[(n+2):end,:] .= compute(pde_system.equations[2].rhs)
+        if flux_limiter
+            diagfilter = ones(n+1)
+            diagfilter[1] = 1
+            diagfilter[2] = 1.0
+            if n+1>=3
+                diagfilter[3:end] .= 1.0
+            end
+            filter = Diagonal(diagfilter)
+            filter = V * filter * inv(V)
+            ruf =  filter * (l_u .* l_u)
+            ∫dA1 = -0.5 * compute_surface_terms(u².metadata.mesh, ruf, l_u, Rusanov(α))
+            ∫dA2 = -0.5 * compute_surface_terms(u².metadata.mesh, u².data.data, l_u, Rusanov(α))
+            v̇[(n+2):end,:] .+= ∫dA1 - ∫dA2
+        end
     end
 
     return nothing
@@ -144,6 +162,7 @@ num = floor(Int, nt/stp)
 indices = stp * collect(1:num)
 pushfirst!(indices, 1)
 push!(indices, nt)
+gr(size = (300,300))
 #filtersolution
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n)
 diagfilter = ones(n+1)
@@ -153,10 +172,23 @@ if n+1>=3
 end
 filter = Diagonal(diagfilter)
 linearfilter = V * filter * inv(V)
+fr = collect(range(-1,1,length=100))
+fV = vandermonde(fr, 0, 0, n)
+refine = fV * inv(V)
 # anim = @animate  
+if inexact
+    title = "Inexact"
+else
+    title = "Exact"
+end
 for i in indices
     ylims = (minimum(sol.u[1])-0.1*maximum(sol.u[1]), maximum(sol.u[1]) + 0.1*maximum(sol.u[1]))
-    plt = plot(x, linearfilter * real.(sol.u[i])[(n+2):end,:], xlims=(Ω.a, Ω.b), ylims = ylims,  linewidth = 2.0, leg = false)
+    plt = plot(refine*x, 
+    refine*linearfilter * real.(sol.u[i])[(n+2):end,:], 
+    xlims=(Ω.a, Ω.b), ylims = ylims,  
+    linewidth = 2.0, 
+    leg = false,
+    title= title)
     plot!(x,  real.(sol.u[1])[(n+2):end,:], xlims = (Ω.a, Ω.b), ylims = ylims, color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     #plt = plot(x, real.(sol.u[i])[1:(n+1),:],ylims = (0, kmax), xlims = (Ω.a, Ω.b), color = "red", leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
     data = sol.u[i][(n+2):end,:]
@@ -173,17 +205,31 @@ for i in indices
     sleep(0.05)
 end
 ##
+expand = 0.0
+shock = (3.8-expand,4.0+expand)
+method = u.metadata.method
+data = u.data.data
+∫dV = compute_volume_terms(data, mesh)
+∫dA = compute_surface_terms(mesh, data, data, Rusanov(0.0))
+p1 = plot(refine * x, refine * u.data.data, xlims = shock, label = false, title = title  * " p="*string(n))
+p2 = plot(refine * x, refine * ∫dV, xlims = shock, label= false, title = "volume derivative")
+p3 = plot(refine * x, refine * ∫dA, xlims = shock, label= false, title = "surface derivative")
+p4 = plot(refine * x, refine * (∫dV + ∫dA), xlims = shock, label = false, title = "total derivative")
+plot(p1,p2,p3,p4)
+##
+#=
 tmp = maximum(real.(sol.u[end])[1:(n+1),:])
 plot(x, real.(sol.u[end])[1:(n+1),:], xlims = (Ω.a, Ω.b), ylims = (0.00, tmp), leg = false, grid = true, gridstyle = :dash, gridalpha = 0.25, framestyle = :box)
 ##
+
 if inexact
     gif(anim, "burgers_inexact_2.gif")
 else
     gif(anim, "burgers_inexact_1.gif")
 end
 
-##
 
 tmp = real.(sol.u[end])[(n+2):end,:]
 
 tmp[1,:] - tmp[end,:]
+=#
