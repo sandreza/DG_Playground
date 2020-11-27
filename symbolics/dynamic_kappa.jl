@@ -5,14 +5,14 @@ include(pwd()*"/symbolics" * "/dg_eval_rules.jl")
 
 # Initial Condition
 u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
-u⁰(x, a, b; ν = 0.0001) = (tanh((x-3(b+a)/8)/ν)+1)*(tanh(-(x-5(b+a)/8)/ν)+1)/4 * (0.1*sin(40π/(b-a) * x) +2)
-#u⁰(x,a,b) = sin(2π/(b-a) * x) + 0.5
+#u⁰(x, a, b; ν = 0.0001) = (tanh((x-3(b+a)/8)/ν)+1)*(tanh(-(x-5(b+a)/8)/ν)+1)/4 * (0.1*sin(40π/(b-a) * x) +2)
+u⁰(x,a,b) = sin(2π/(b-a) * x) + 0.5
 c = 1.5
-T = 4π/1.5# 1.5 #1.5π # 1.5 for burgers
-inexact = false
+T = 1.5 # 4pi/1.5# advection = 4π/1.5, 1.5 for burgers
+inexact = true
 cfl = 0.3
-K = 300   # Number of elements
-n = 4    # Polynomial Order
+K = 80   # Number of elements
+n = 3    # Polynomial Order
 r = jacobiGL(0, 0, n)
 V = vandermonde(r, 0, 0, n)
 
@@ -36,6 +36,7 @@ end
 
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
 α = 1.5/2#1.5/2; # Rusanov parameter
+Δu = 0.5 / n# regularization parameter
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
 central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
@@ -44,20 +45,20 @@ u = Field(Data(u0), field_md);
 u² = Field(Data(u0 .* u0), field_md);
 κbase = minimum([1.5e-8, Δx * α ]) # Diffusivity Constant
 κ0 = x .* 0 .+ κbase
-kmax = Δx * α
+kmax = Δx * α 
 κ̇ = Data(κ0);
 κ = Field(Data(κ0) , field_md);
 ∂xᶜ(a::AbstractExpression) = Gradient(a, central);
 ∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
 dt = minimum([Δx^2 / maximum(kmax) * cfl, abs(Δx / α) * cfl, abs(Δx / maximum(abs.(u0))) * cfl ])
-λ = 0.9/(dt) # 1.0 / dt makes it change immediately every timstep
+λ = 0.5/(dt) # 1.0 / dt makes it change immediately every timstep
 
 # minimum grid spacing  / 2*expected linfinity
-smoothness = tanh((∂xᶜ(u)*(Δx/(α+eps(1.0))))^2) # 0 for smooth, 1 for unsmooth
+smoothness = tanh((∂xᶜ(u)*(Δx/(Δu+eps(1.0))))^2) # 0 for smooth, 1 for unsmooth
 # Burgers equation rhs, 
 pde_equation = [
     κ̇ == -λ*(κ + (-κbase + 1 * (-kmax+κbase) * smoothness)) ,
-    u̇ == -∂xᴿ(u*c)*0.5  + ∂xᶜ( κ * ∂xᶜ(u)),
+    u̇ == -∂xᴿ(u²)*0.5  + ∂xᶜ( κ * ∂xᶜ(u)),
 ]
 
 pde_meta_data = Dict("name" => "Burgers Equation", "method" => "discontinuous Galerkin")
