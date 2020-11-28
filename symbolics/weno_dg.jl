@@ -141,7 +141,7 @@ end
 # 2
 # If there is a change in sign between the jumps 
 # the cell is trouble
-mminmod(a; h=0.1, M=0.1) = abs.(a[1]) < h*M^2 ? abs.(a[1]) : minmod(a) 
+mminmod(a; M = 0.1) = abs.(a[1]) < M ? a[1] : minmod(a) 
 troubled_i = collect(1:K)
 minmods = [minmod([ṽ[i],Δ₊v[i],Δ₋v[i]]) for i in 1:K]
 troubled = minmods .!= ṽ
@@ -237,7 +237,16 @@ plot!(x[:,i1], w0 .* ṽ[:,lefti] + w1 .* ṽ[:,i1]+ w2 .* ṽ[:,righti]+ v̅[:,
 
 plot(x[:, i2], v[:,i2], color = :blue)
 plot!(x[:,i1], w0 .* ṽ[:, lefti] + w1 .* ṽ[:,i1] + w2 .* ṽ[:,righti] + v̅[:,i1], label = false, color = :green)
-##
+## WENO FUNCTIONS
+function minmod(a)
+    if prod(sign.(a) .== sign(a[1]))
+        return sign.(a[1])*minimum(abs.(a))
+    else
+        return -0
+    end
+end
+mminmod(a; M = 0.0) = abs.(a[1]) < M ? a[1] : minmod(a)
+
 function smoothness_indicator(v, mesh)
     smoothness = zeros(mesh.K)
     Δxⱼ = reshape(mesh.x[end,:]-mesh.x[1,:], (1,mesh.K))
@@ -246,37 +255,61 @@ function smoothness_indicator(v, mesh)
     β = weights * (Δxⱼ .^(2 * 1 -1) .* (deriv .^2))
     for jjj in 2:n
         deriv .= mesh.D * deriv
-        β .+= weights * (Δxⱼ .^(2 * jjj -1) .* (deriv .^2))
+        β .+= weights * (Δxⱼ .^(2 * jjj -1) .* (deriv .^2)) ./ factorial(jjj) # excessive
     end
     return β
 end
 
-function troubled_cells(v, mesh, cells)
+function troubled_cells(v, mesh, cells; M = 0.0)
     K = mesh.K
     v̅ = cells * v
     ṽ = v̅[1,:] -  v[1,:]
     ṽ̃ = v[end, :] - v̅[end,:]
-    vtb = reshape(v̅[mesh.vmapP] - v̅[mesh.vmapM], (2,80))
+    vtb = reshape(v̅[mesh.vmapP] - v̅[mesh.vmapM], (2,K))
     Δ₊v = vtb[end,:]
     Δ₋v = -vtb[1,:]
     troubled_i = collect(1:K)
-    minmods = [minmod([ṽ[i],Δ₊v[i],Δ₋v[i]]) for i in 1:K]
+    minmods = [mminmod([ṽ[i],Δ₊v[i],Δ₋v[i]], M = M) for i in 1:K]
     troubled = minmods .!= ṽ
-    minmods = [minmod([ṽ̃[i],Δ₊v[i],Δ₋v[i]]) for i in 1:K]
+    minmods = [mminmod([ṽ̃[i],Δ₊v[i],Δ₋v[i]], M = M) for i in 1:K]
     troubled2 = minmods .!= ṽ̃
     makeitdouble = troubled .| troubled2
     i1 = troubled_i[makeitdouble]
     return i1, v̅
 end
 
-function weno_adjustment(v, mesh, cells)
+function weno_adjustment(v, mesh, cells; M = 0)
     β = smoothness_indicator(v, mesh)
     ϵ = 1e-6
     allw = 1 ./ ((ϵ .+ β) .^ 2)
     γ1 = 0.998
     γ0 = (1-γ1)/2
     γ2 = γ0
-    i1, v̅ = troubled_cells(v, mesh, cells)
+    i1, v̅ = troubled_cells(v, mesh, cells, M=M)
+    lefti = adjust.(i1 .- 1)
+    righti = adjust.(i1 .+ 1)
+    sumw = γ0*allw[lefti] + γ1*allw[i1] + γ2*allw[righti]
+    w0 = γ0*allw[lefti] ./ sumw
+    w1 = γ1*allw[i1] ./ sumw
+    w2 = γ2*allw[righti] ./ sumw
+    w0 = reshape(w0, (1, length(i1)))
+    w1 = reshape(w1, (1, length(i1)))
+    w2 = reshape(w2, (1, length(i1)))
+    ṽ  = v-v̅
+    adjustedv = w0 .* ṽ[:, lefti] + w1 .* ṽ[:,i1] + w2 .* ṽ[:,righti] + v̅[:,i1]
+    v[:, i1] .= adjustedv
+    return nothing
+end
+##
+function weno_everything(v, mesh, cells; M=0)
+    β = smoothness_indicator(v, mesh)
+    ϵ = 1e-6
+    allw = 1 ./ ((ϵ .+ β) .^ 2)
+    γ1 = 0.998
+    γ0 = (1-γ1)/2
+    γ2 = γ0
+    i1 = collect(1:mesh.K)
+    v̅ = cells * v
     lefti = adjust.(i1 .- 1)
     righti = adjust.(i1 .+ 1)
     sumw = γ0*allw[lefti] + γ1*allw[i1] + γ2*allw[righti]
@@ -297,10 +330,10 @@ end
 u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
 u⁰(x,a,b) = sin(2π/(b-a) * x) + 0.5
 T = 1.5
-inexact = true
-cfl = 0.1
+inexact = false
+cfl = 0.3
 K = 80   # Number of elements
-n = 8    # Polynomial Order
+n = 2    # Polynomial Order
 
 r = jacobiGL(0, 0, n)
 V = vandermonde(r, 0, 0, n)
@@ -323,90 +356,163 @@ end
 
 
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
-α = 1.5/2#1.5/2; # Rusanov parameter
-Δu = 0.5 / n# regularization parameter
+α = 1*1.5
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
 central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
 u̇ = Data(u0);
 u = Field(Data(u0), field_md);
-κbase = minimum([1.5e-8, Δx * α ]) # Diffusivity Constant
-κ0 = x .* 0 .+ κbase
-kmax = Δx * α * 0 /10 + κbase
-κ̇ = Data(κ0);
-κ = Field(Data(κ0) , field_md);
-∂xᶜ(a::AbstractExpression) = Gradient(a, central);
-∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
-dt = minimum([Δx^2 / maximum(kmax) * cfl, abs(Δx / α) * cfl, abs(Δx / maximum(abs.(u0))) * cfl ])
-λ = 0.5/(dt) # 1.0 / dt makes it change immediately every timstep
 
-# minimum grid spacing  / 2*expected linfinity
-smoothness = tanh((∂xᶜ(u)*(Δx/(Δu+eps(1.0))))^2) # 0 for smooth, 1 for unsmooth
+∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
+dt = minimum([abs(Δx / α) * cfl, abs(Δx / maximum(abs.(u0))) * cfl ])
+dt = T / ceil(Int,T/dt)
+numsteps = ceil(Int,T/dt)
 # Burgers equation rhs, 
 pde_equation = [
-    κ̇ == -λ*(κ + (-κbase + 1 * (-kmax+κbase) * smoothness)) ,
-    u̇ == -∂xᴿ(u*u)*0.5  + ∂xᶜ( κ * ∂xᶜ(u)),
+    u̇ == -∂xᴿ(u*u)*0.5,
 ]
 
-p = (pde_equation, u, κ, n);
-
-function dg_burgers_weno!(v̇ , v, params, t)
-    # unpack parameters
-    equations = params[1]
-    u = params[2]
-    κ = params[3]
-    n = params[4]
-    equations[1].lhs.data .=  real.(v[1:(n+1),:])
-    weno_adjustment(view(v,(n+2):2n+2,:), mesh, cells)
-    equations[2].lhs.data .=  real.(v[(n+2):end,:])
-    v̇[1:(n+1),:]   .= compute(equations[1].rhs)
-    v̇[(n+2):end,:] .= compute(equations[2].rhs)
+# incorrect?
+function ssp3_step!(equations, mesh, cells, Δt; M = 0)
+    uⁿ = copy(equations[1].lhs.data)
+    weno_adjustment(uⁿ, mesh, cells, M = M)
+    equations[1].lhs.data .= uⁿ
+    u¹ = uⁿ + Δt * compute(equations[1].rhs)
+    weno_adjustment(u¹, mesh, cells, M = M)
+    equations[1].lhs.data .= u¹
+    u² = 3/4*uⁿ + 1/4*u¹ + (1/4*Δt) * compute(equations[1].rhs)
+    weno_adjustment(u², mesh, cells, M = M)
+    equations[1].lhs.data .= u²
+    equations[1].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[1].rhs)
+    return nothing
+end
+# correct?
+function ssp3_step!(equations, mesh, cells, Δt; M = 0)
+    uⁿ = copy(equations[1].lhs.data)
+    weno_everything(equations[1].lhs.data, mesh, cells, M = M)
+    u¹ = uⁿ + Δt * compute(equations[1].rhs)
+    equations[1].lhs.data .= u¹
+    weno_everything(equations[1].lhs.data, mesh, cells, M = M)
+    u² = 3/4*uⁿ + 1/4*u¹ + (1/4*Δt) * compute(equations[1].rhs)
+    equations[1].lhs.data .= u²
+    weno_everything(u², mesh, cells, M = M)
+    equations[1].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[1].rhs)
     return nothing
 end
 
-rhs! = dg_burgers_weno!
-tspan = (0.0, T)
+function ssp3_step_nw!(equations, mesh, cells, Δt; M = 0)
+    uⁿ = copy(equations[1].lhs.data)
+    equations[1].lhs.data .= uⁿ
+    u¹ = uⁿ + Δt * compute(equations[1].rhs)
+    equations[1].lhs.data .= u¹
+    u² = 3/4*uⁿ + 1/4*u¹ + (1/4*Δt) * compute(equations[1].rhs)
+    equations[1].lhs.data .= u²
+    equations[1].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[1].rhs)
+    return nothing
+end
 
-# Define ODE problem
-v = vcat(copy(κ0), copy(u0))
-v̇ = (copy(κ0), copy(u0))
-ode_problem = (rhs!, v, tspan, p);
-
-using DifferentialEquations
-prob = ODEProblem(ode_problem...);
-# Solve it
-ode_method = Euler() # Heun(), RK4, Tsit5, Feagin14(), SSPRK33
-sol  = solve(prob, ode_method, dt=dt, adaptive = false);
-
-# Plot it
+#=
+function ssp3_step!(equations, mesh, cells, Δt)
+    uⁿ = copy(equations[1].lhs.data)
+    weno_everything(uⁿ, mesh, cells)
+    equations[1].lhs.data .= uⁿ
+    u¹ = uⁿ + Δt * compute(equations[1].rhs)
+    weno_everything(u¹, mesh, cells)
+    equations[1].lhs.data .= u¹
+    u² = 3/4*uⁿ + 1/4*u¹ + (1/4*Δt) * compute(equations[1].rhs)
+    weno_everything(u², mesh, cells)
+    equations[1].lhs.data .= u²
+    equations[1].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[1].rhs)
+    return nothing
+end
+=#
 ##
-theme(:juno)
-nt =  length(sol.t)
-num = 10 # Number of Frames
-stp = floor(Int, nt/num)
-num = floor(Int, nt/stp)
-indices = stp * collect(1:num)
-pushfirst!(indices, 1)
-push!(indices, nt)
-gr(size = (300,300))
-#filtersolution
-mesh = create_mesh(Ω, elements = K, polynomial_order =  n)
-
+check = floor(Int,numsteps/20)
+modby = check > 0 ? check : floor(Int,numsteps/4)
+for i in 1:numsteps
+    criteria = 1*(mesh.x[2] - mesh.x[1])
+    ssp3_step!(pde_equation, mesh, cells, dt, M = criteria)
+    if (i%modby)==0
+        v = u.data.data
+        i1, v̅ =  troubled_cells(v, mesh, cells, M = criteria)
+        plt = plot(mesh.x, v, 
+        label = false, 
+        color = :blue, ylims = (-0.6, 1.6))
+        plot!(mesh.x[:,i1], v[:,i1], 
+        label = false, 
+        color = :red, ylims = (-0.6, 1.6))
+        display(plt)
+        sleep(0.1)
+    end
+end
+v = u.data.data
+i1, v̅ =  troubled_cells(v, mesh, cells)
+plt = plot(mesh.x, v, 
+label = false, 
+color = :blue, ylims = (-0.6, 1.6))
+plot!(mesh.x[:,i1], v[:,i1], 
+label = false, 
+color = :red, ylims = (-0.6, 1.6))
+display(plt)
+##
 fr = collect(range(-1,1,length=100))
 fV = vandermonde(fr, 0, 0, n)
 refine = fV * inv(V)
-# anim = @animate  
-if inexact
-    title = "Inexact"
-else
-    title = "Exact"
-end
+using JLD2
+shock = (3.8, 4.0)
+refsolution = jldopen("reference.jld2")
+refx = refsolution["x"]
+refu = refsolution["u.data.data"]
+plot(refx, refu, 
+linewidth = 3, 
+xlims = shock, 
+label = false, 
+color = :blue,
+title = "reference vs computed, "*title*", p="*string(n),
+ylabel = "u",
+xlabel = "x")
+p1 = plot!(refine * mesh.x, refine * u.data.data, 
+labels = false, 
+ylims = (-0.6, 1.8), 
+xlims = shock)
+display(p1)
+##
+v = copy(u.data.data)
+i1, v̅ =  troubled_cells(v, mesh, cells)
 
-for i in indices
-    v = real.(sol.u[i])[(n+2):end,:]
-    i1, v̅ = troubled_cells(v, mesh, cells)
-    plt = plot(x, v, label = false, color = :blue, ylims = (-0.6, 1.6))
-    plot!(x[:,i1], v[:,i1], label = false, color = :red)
-    display(plt)
-    sleep(0.05)
-end
+plt = plot(mesh.x, v, 
+label = false, 
+color = :blue, ylims = (-0.6, 1.6))
+plot!(mesh.x[:,i1], v[:,i1], 
+label = false, 
+color = :red, ylims = (-0.6, 1.6))
+##
+β = smoothness_indicator(v, mesh)
+ϵ = 1e-6
+allw = 1 ./ ((ϵ .+ β) .^ 2)
+γ1 = 0.998
+γ0 = (1-γ1)/2
+γ2 = γ0
+i1, v̅ = troubled_cells(v, mesh, cells)
+lefti = adjust.(i1 .- 1)
+righti = adjust.(i1 .+ 1)
+sumw = γ0*allw[lefti] + γ1*allw[i1] + γ2*allw[righti]
+w0 = γ0*allw[lefti] ./ sumw
+w1 = γ1*allw[i1] ./ sumw
+w2 = γ2*allw[righti] ./ sumw
+w0 = reshape(w0, (1, length(i1)))
+w1 = reshape(w1, (1, length(i1)))
+w2 = reshape(w2, (1, length(i1)))
+ṽ = v - v̅
+adjustedv = w0 .* ṽ[:, lefti] + w1 .* ṽ[:,i1] + w2 .* ṽ[:,righti] + v̅[:,i1]
+plot(x[:,i1], adjustedv - v̅[:,i1], labels= false, color = :blue, line = 3)
+plot!(x[:,i1], v[:,i1] - v̅[:,i1], labels= false, color = :red, line = 3)
+##
+tmp = cells * v
+weno_adjustment(v, mesh, cells)
+tmp2 = cells * v
+norm(tmp - tmp2)
+
+plt = plot(x[:,i1], v[:,i1], 
+label = false, 
+color = :red, ylims = (-0.6, 1.6))
