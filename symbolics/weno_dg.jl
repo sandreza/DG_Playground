@@ -251,11 +251,11 @@ function smoothness_indicator(v, mesh)
     smoothness = zeros(mesh.K)
     Δxⱼ = reshape(mesh.x[end,:]-mesh.x[1,:], (1,mesh.K))
     deriv = mesh.D * (v)
-    weights = sum(mesh.M, dims = 1)
+    weights = sum(mesh.M, dims = 1) ./ 2
     β = weights * (Δxⱼ .^(2 * 1 -1) .* (deriv .^2))
     for jjj in 2:n
         deriv .= mesh.D * deriv
-        β .+= weights * (Δxⱼ .^(2 * jjj -1) .* (deriv .^2)) ./ factorial(jjj) # excessive
+        β .+= weights * (Δxⱼ .^(2 * jjj -1) .* (deriv .^2))  # excessive
     end
     return β
 end
@@ -331,9 +331,9 @@ u⁰(x, a, b) = exp(-2 * (b-a) / 3 * (x - (b-a)/2)^2);
 u⁰(x,a,b) = sin(2π/(b-a) * x) + 0.5
 T = 1.5
 inexact = false
-cfl = 0.3
+cfl = 0.1
 K = 80   # Number of elements
-n = 2    # Polynomial Order
+n = 3    # Polynomial Order
 
 r = jacobiGL(0, 0, n)
 V = vandermonde(r, 0, 0, n)
@@ -354,7 +354,9 @@ if inexact
     mesh.lift[:,end] .= mesh.Mi[end,:]
 end
 
-
+ #   u⁰(x, a, b; ν = 0.0001) = (tanh((x-3(b+a)/8)/ν)+1)*(tanh(-(x-5(b+a)/8)/ν)+1)/4 * (0.1*sin(40π/(b-a) * x) +2)
+ #   c = 1.5
+  #  T = 4π/c
 u0 = @. u⁰(x, Ω.a, Ω.b) # use initial condition for array
 α = 1*1.5
 field_md = DGMetaData(mesh, nothing, nothing); # wrap field metadata
@@ -362,6 +364,7 @@ central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
 u̇ = Data(u0);
 u = Field(Data(u0), field_md);
+u² = Field(Data(u0 .* u0), field_md);
 
 ∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
 dt = minimum([abs(Δx / α) * cfl, abs(Δx / maximum(abs.(u0))) * cfl ])
@@ -389,13 +392,14 @@ end
 # correct?
 function ssp3_step!(equations, mesh, cells, Δt; M = 0)
     uⁿ = copy(equations[1].lhs.data)
-    weno_everything(equations[1].lhs.data, mesh, cells, M = M)
+    weno_adjustment(equations[1].lhs.data, mesh, cells, M = M)
     u¹ = uⁿ + Δt * compute(equations[1].rhs)
     equations[1].lhs.data .= u¹
-    weno_everything(equations[1].lhs.data, mesh, cells, M = M)
+    weno_adjustment(equations[1].lhs.data, mesh, cells, M = M)
     u² = 3/4*uⁿ + 1/4*u¹ + (1/4*Δt) * compute(equations[1].rhs)
     equations[1].lhs.data .= u²
-    weno_everything(u², mesh, cells, M = M)
+    weno_adjustment(u², mesh, cells, M = M)
+    #weno_adjustment(equations[1].lhs.data, mesh, cells, M = M)
     equations[1].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[1].rhs)
     return nothing
 end
@@ -430,7 +434,7 @@ end
 check = floor(Int,numsteps/20)
 modby = check > 0 ? check : floor(Int,numsteps/4)
 for i in 1:numsteps
-    criteria = 1*(mesh.x[2] - mesh.x[1])
+    criteria = 00*(mesh.x[2] - mesh.x[1])
     ssp3_step!(pde_equation, mesh, cells, dt, M = criteria)
     if (i%modby)==0
         v = u.data.data
@@ -449,12 +453,16 @@ v = u.data.data
 i1, v̅ =  troubled_cells(v, mesh, cells)
 plt = plot(mesh.x, v, 
 label = false, 
-color = :blue, ylims = (-0.6, 1.6))
+color = :blue, ylims = (-0.6, 1.6*2))
 plot!(mesh.x[:,i1], v[:,i1], 
 label = false, 
-color = :red, ylims = (-0.6, 1.6))
+color = :red, ylims = (-0.6, 1.6*2))
 display(plt)
+
 ##
+##
+extrap_r = r .+ 1
+extrap_l = r .- 1
 fr = collect(range(-1,1,length=100))
 fV = vandermonde(fr, 0, 0, n)
 refine = fV * inv(V)
@@ -471,7 +479,9 @@ color = :blue,
 title = "reference vs computed, "*title*", p="*string(n),
 ylabel = "u",
 xlabel = "x")
-p1 = plot!(refine * mesh.x, refine * u.data.data, 
+p1 = plot!(refine * mesh.x,
+ refine * u.data.data, 
+ linewidth = 2,
 labels = false, 
 ylims = (-0.6, 1.8), 
 xlims = shock)
@@ -515,4 +525,235 @@ norm(tmp - tmp2)
 
 plt = plot(x[:,i1], v[:,i1], 
 label = false, 
-color = :red, ylims = (-0.6, 1.6))
+color = :red, ylims = (-0.6, 2.2))
+
+##
+cellindex = i1[1]
+cellindexr = adjust(cellindex+1, mesh)
+cellindexl = adjust(i1[1]-1, mesh)
+x = mesh.x
+Iⱼ = (x[end, cellindex ] - x[1, cellindex ])
+Iⱼ₊₁ = (x[end, cellindexr ] - x[1, cellindexr ])
+Iⱼ₋₁ = (x[end, cellindexl ] - x[1, cellindexl ])
+extrap_r = (r .+ 2) * (Iⱼ/Iⱼ₊₁)
+extrap_l = (r .- 2) * (Iⱼ/Iⱼ₋₁)
+Vr = vandermonde(extrap_r, 0, 0, n)
+Vl = vandermonde(extrap_l, 0, 0, n)
+extrapr = Vr * inv(V)
+extrapl = Vl * inv(V)
+
+function extrapolate(v, mesh, cellindex)
+    cellindexr = adjust(cellindex+1, mesh)
+    cellindexl = adjust(cellindex-1, mesh)
+    x = mesh.x
+    Iⱼ = (x[end, cellindex ] - x[1, cellindex ])
+    Iⱼ₊₁ = (x[end, cellindexr ] - x[1, cellindexr ])
+    Iⱼ₋₁ = (x[end, cellindexl ] - x[1, cellindexl ])
+    r = jacobiGL(0, 0, size(v)[1]-1)
+    extrap_r = (r .+ 2) * (Iⱼ/Iⱼ₊₁)
+    extrap_l = (r .- 2) * (Iⱼ/Iⱼ₋₁)
+    Vr = vandermonde(extrap_r, 0, 0, n)
+    Vl = vandermonde(extrap_l, 0, 0, n)
+    extrapr = Vr * inv(V)
+    extrapl = Vl * inv(V)
+    weights = sum(mesh.M, dims = 1) ./ 2
+    v̅  = weights * v[:, cellindex]
+    vr = extrapr * v[:, cellindexl]
+    vr = vr # .- weights*vr .+ v̅ 
+    vl = extrapl * v[:, cellindexr]
+    vl = vl # .- weights*vl .+ v̅ 
+    return vr, vl
+end
+
+function smoothness_indicator(v, cellindex, mesh)
+    Δxⱼ = mesh.x[end,cellindex]-mesh.x[1,cellindex]
+    deriv = mesh.D * (v)
+    weights = sum(mesh.M, dims = 1) ./ 2
+    β = weights * (Δxⱼ .^(2 * 1 -1) .* (deriv .^2))
+    for jjj in 2:n
+        deriv .= mesh.D * deriv
+        β .+= weights * (Δxⱼ .^(2 * jjj -1) .* (deriv .^2)) ./ factorial(jjj) # excessive
+    end
+    return β
+end
+
+## Step 1 Identify troubled cells
+cellindex = i1[end-3]
+cellindexr = adjust(cellindex+1, mesh)
+cellindexl = adjust(cellindex-1, mesh)
+vr, vl = extrapolate(v, mesh, cellindex)
+fr = collect(range(-1,1,length=100))
+fV = vandermonde(fr, 0, 0, n)
+refine = fV * inv(V)
+
+identifyp = plot(refine*x[:, cellindex], 
+refine*v[:,cellindex],
+color = :red, label = "troubled cell",
+legend = :right,
+linewidth = 3)
+plot!(refine*x[:, cellindexl],
+ refine*v[:, cellindexl],
+ color = :blue,
+  label = "neighborl",
+  linewidth = 3)
+plot!(refine*x[:, cellindexr],
+ refine*v[:, cellindexr],
+color = :blue,
+label = "neighborr",
+title = "identify",
+linewidth = 3)
+
+
+extrapolatep = plot(refine*x[:, cellindex], 
+refine*v[:,cellindex],
+color = :red, label = "troubled cell",
+legend = :right,
+linewidth = 3)
+plot!(refine*x[:, cellindexl],
+ refine*v[:, cellindexl],
+ color = :blue,
+  label = "neighborl",
+  linewidth = 3)
+plot!(refine*x[:, cellindexr],
+ refine*v[:, cellindexr],
+color = :blue,
+label = "neighborr",
+linewidth = 3)
+plot!(refine*x[:, cellindex], 
+refine*vr, 
+color = :green,
+label = "extrapolate r",
+linewidth = 3)
+plot!(refine*x[:, cellindex], 
+refine*vl, 
+color = :green,
+label = "extrapolate l",
+title = "extrapolate",
+linewidth = 3)
+# Step 2 Adjust
+weights = sum(mesh.M, dims = 1) ./ 2
+v̅  = weights * v[:, cellindex]
+vr = vr .- weights*vr .+ v̅ 
+vl = vl .- weights*vl .+ v̅ 
+adjustp = plot(refine*x[:, cellindex], 
+refine*v[:,cellindex],
+color = :red, label = "troubled cell",
+legend = :right,
+linewidth = 3)
+plot!(refine*x[:, cellindexl],
+ refine*v[:, cellindexl],
+ color = :blue,
+  label = "neighborl",
+  linewidth = 3)
+plot!(refine*x[:, cellindexr],
+ refine*v[:, cellindexr],
+color = :blue,
+label = "neighborr",
+linewidth = 3)
+plot!(refine*x[:, cellindex], 
+refine*vr, 
+color = :green,
+label = "extrapolate r",
+linewidth = 3)
+plot!(refine*x[:, cellindex], 
+refine*vl, 
+color = :green,
+label = "extrapolate l",
+title = "adjust",
+linewidth = 3)
+# Step 3: Calculate smoothness
+β₀ =  smoothness_indicator(vl, cellindex, mesh)
+β₁ =  smoothness_indicator(v[:, cellindex], cellindex, mesh)
+β₂ =  smoothness_indicator(vr, cellindex, mesh)
+β = [β₀ β₁ β₂]
+ϵ = 1e-6
+allw = 1 ./ ((ϵ .+ β) .^ 2)
+γ1 = 0.95 #998
+γ0 = (1-γ1)/2
+γ2 = γ0
+sumw = γ0*allw[1] + γ1*allw[2] + γ2*allw[3]
+w0 = γ0*allw[1] ./ sumw
+w1 = γ1*allw[2] ./ sumw
+w2 = γ2*allw[3] ./ sumw
+reconstruct = w0*vl + w1*v[:, cellindex] + w2*vr
+
+reconstructp = plot(refine*x[:, cellindex], 
+refine*v[:,cellindex],
+color = :red, label = "troubled cell",
+legend = :right,
+linewidth = 3)
+plot!(refine*x[:, cellindex],
+refine*reconstruct,
+color = :green,
+label = "reconstructed",
+title = "reconstruct",
+linewidth = 3)
+plot!(refine*x[:, cellindexl],
+ refine*v[:, cellindexl],
+ color = :blue,
+  label = "neighborl",
+  linewidth = 3)
+plot!(refine*x[:, cellindexr],
+ refine*v[:, cellindexr],
+color = :blue,
+label = "neighborr",
+linewidth = 3)
+
+gr(size=(1000,1000))
+pall = plot(identifyp, extrapolatep, adjustp, reconstructp)
+savefig(pall, pwd() * "/fig/"*"weno_procedure.png")
+##
+
+function smoothness_indicator(v, mesh)
+    smoothness = zeros(mesh.K)
+    Δxⱼ = reshape(mesh.x[end,:]-mesh.x[1,:], (1,mesh.K))
+    deriv = mesh.D * (v)
+    weights = sum(mesh.M, dims = 1)
+    β = weights * (Δxⱼ .^(2 * 1 -1) .* (deriv .^2))
+    for jjj in 2:n
+        deriv .= mesh.D * deriv
+        β .+= weights * (Δxⱼ .^(2 * jjj -1) .* (deriv .^2)) ./ factorial(jjj) # excessive
+    end
+    return β
+end
+
+function troubled_cells(v, mesh, cells; M = 0.0)
+    K = mesh.K
+    v̅ = cells * v
+    ṽ = v̅[1,:] -  v[1,:]
+    ṽ̃ = v[end, :] - v̅[end,:]
+    vtb = reshape(v̅[mesh.vmapP] - v̅[mesh.vmapM], (2,K))
+    Δ₊v = vtb[end,:]
+    Δ₋v = -vtb[1,:]
+    troubled_i = collect(1:K)
+    minmods = [mminmod([ṽ[i],Δ₊v[i],Δ₋v[i]], M = M) for i in 1:K]
+    troubled = minmods .!= ṽ
+    minmods = [mminmod([ṽ̃[i],Δ₊v[i],Δ₋v[i]], M = M) for i in 1:K]
+    troubled2 = minmods .!= ṽ̃
+    makeitdouble = troubled .| troubled2
+    i1 = troubled_i[makeitdouble]
+    return i1, v̅
+end
+
+function weno_adjustment(v, mesh, cells; M = 0)
+    β = smoothness_indicator(v, mesh)
+    ϵ = 1e-6
+    allw = 1 ./ ((ϵ .+ β) .^ 2)
+    γ1 = 0.998
+    γ0 = (1-γ1)/2
+    γ2 = γ0
+    i1, v̅ = troubled_cells(v, mesh, cells, M=M)
+    lefti = adjust.(i1 .- 1)
+    righti = adjust.(i1 .+ 1)
+    sumw = γ0*allw[lefti] + γ1*allw[i1] + γ2*allw[righti]
+    w0 = γ0*allw[lefti] ./ sumw
+    w1 = γ1*allw[i1] ./ sumw
+    w2 = γ2*allw[righti] ./ sumw
+    w0 = reshape(w0, (1, length(i1)))
+    w1 = reshape(w1, (1, length(i1)))
+    w2 = reshape(w2, (1, length(i1)))
+    ṽ  = v-v̅
+    adjustedv = w0 .* ṽ[:, lefti] + w1 .* ṽ[:,i1] + w2 .* ṽ[:,righti] + v̅[:,i1]
+    v[:, i1] .= adjustedv
+    return nothing
+end
