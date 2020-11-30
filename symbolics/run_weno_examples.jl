@@ -1,10 +1,10 @@
-
+using JLD2
 include(pwd() * "/symbolics" * "/dg_eval_rules.jl")
 include(pwd() * "/symbolics" * "/weno_functions.jl")
 gr(size = (500,500))
-for jjj in [1] ##[1, 2,3,4,5,6,7]
-    for quadrature_rule in [true] # [true, false]
-        for problemtype in ["burgers"] # ["burgers", "advection"]
+for jjj in [1, 2,3,4,5,6,7]
+    for quadrature_rule in [true, false]
+        for problemtype in ["burgers", "advection"]
 n = jjj
 problem = problemtype
 inexact = quadrature_rule
@@ -34,6 +34,9 @@ K = 80   # Number of elements
 
 r = jacobiGL(0, 0, n)
 V = vandermonde(r, 0, 0, n)
+fr = collect(range(-1,1,length=100))
+fV = vandermonde(fr, 0, 0, n)
+refine = fV * inv(V)
 avg = Diagonal(zeros(n+1))
 avg[1] = 1
 cells = V * avg * inv(V)
@@ -74,18 +77,18 @@ if problem == "burgers"
     pde_equation = [
         u̇ == -∂xᴿ(u*u)*0.5,
     ]
-    criteria = n*(mesh.x[2] - mesh.x[1])
+    criteria = 0.01*(mesh.x[2] - mesh.x[1])^2
 elseif problem == "advection"
     pde_equation = [
         u̇ == -∂xᴿ(u*c)*0.5 ,
     ]
-    criteria = n*100.0*(mesh.x[2] - mesh.x[1])
+    criteria = 0.01*(mesh.x[2] - mesh.x[1])^2
 else
     pde_equation = []
 end
 equations = pde_equation
 
-check = floor(Int,numsteps/20)
+check = floor(Int,numsteps/40)
 modby = check > 0 ? check : floor(Int,numsteps/4)
 sol = []
 push!(sol, copy(u.data.data))
@@ -114,12 +117,20 @@ anim = @animate for i in eachindex(sol)
     label = false,
     linewidth =3, 
     color = :red, ylims = ylims)
+    if problem == "advection"
+        refx = refine * x
+        refu  = @. (tanh((refx-3(b+a)/8)/ν)+1)*(tanh(-(refx-5(b+a)/8)/ν)+1)/4 * (0.1*sin(40π/(b-a) * refx) +2)
+        plot!(refine * x, refu, 
+        linewidth = 3, 
+        label = false, 
+        color = :green,
+        ylabel = "u",
+        xlabel = "x")
+    end
 end
 gif(anim, pwd() * "/fig/weno_"*problem*"_animation"*parameterlabel*".gif")
 
-fr = collect(range(-1,1,length=100))
-fV = vandermonde(fr, 0, 0, n)
-refine = fV * inv(V)
+
 if problem == "burgers"
     refsolution = jldopen("reference.jld2")
     refx = refsolution["x"]

@@ -195,18 +195,23 @@ function reconstruct!(v, vl, vr, cellindex, mesh, weights; γ1 = 0.998, ϵ=1e-6,
     vl = vl .- weights * vl .+ v̅
     vr = vr .- weights * vr .+ v̅
     # smooth extrapolations before passing in
-    # vltmp = (vl .* 0.75 + vr .* 0.25) 
-    # vrtmp = (vl .* 0.25 + vr .* 0.75) 
-    # vl = vltmp
-    # vr = vrtmp
+    # this would matter if w1-w3 were chosen
+    # as the "smoothest"
+    w1 = 1.0 # w1 = 0.7, w2 = 0.1
+    w2 = 0.0
+    w3 = 1-w1-w2
+    vltmp = (vl .* w1 + vr .* w2) + w3 .* v[:, cellindex] 
+    vrtmp = (vl .* w2 + vr .* w1) + w3 .* v[:, cellindex]
+    vl = vltmp
+    vr = vrtmp
     β₀ =  smoothness_indicator(vl, cellindex, mesh)
     β₁ =  smoothness_indicator(v[:, cellindex], cellindex, mesh)
     β₂ =  smoothness_indicator(vr, cellindex, mesh)
 
     if variational
-        β₀ .+= 0.1*((vre - vl[end])^2 + (vle - vl[1])^2)
-        β₁ .+= 0.1*((vre - v[end, cellindex])^2 + (vle - v[1, cellindex])^2) 
-        β₂ .+= 0.1*((vre - vr[end])^2 + (vle - vr[1])^2) 
+        β₀ .+= 0.01*((vre - vl[end])^2 + (vle - vl[1])^2)
+        β₁ .+= 0.01*((vre - v[end, cellindex])^2 + (vle - v[1, cellindex])^2) 
+        β₂ .+= 0.01*((vre - vr[end])^2 + (vle - vr[1])^2) 
     end
     β = [β₀ β₁ β₂]
     allw = 1 ./ ((ϵ .+ β) .^ 2)
@@ -254,18 +259,19 @@ end
 
 function ssp3_step!(equations, mesh, cells, Δt; M = 0, weno=true, threshold = 0)
     uⁿ = copy(equations[1].lhs.data)
+    equations[1].lhs.data .= uⁿ
     if weno
         weno_adjustment(uⁿ, mesh, cells, M = M,  threshold = threshold)
     end
     equations[1].lhs.data .= uⁿ
     u¹ = uⁿ + Δt * compute(equations[1].rhs)
     if weno
-        #weno_adjustment(u¹, mesh, cells, M = M,  threshold = threshold)
+        weno_adjustment(u¹, mesh, cells, M = M,  threshold = threshold)
     end
     equations[1].lhs.data .= u¹
     u² = 3/4*uⁿ + 1/4*u¹ + (1/4*Δt) * compute(equations[1].rhs)
     if weno 
-        #weno_adjustment(u², mesh, cells, M = M,  threshold = threshold)
+        weno_adjustment(u², mesh, cells, M = M,  threshold = threshold)
     end
     equations[1].lhs.data .= u²
     equations[1].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[1].rhs)
