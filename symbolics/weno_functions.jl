@@ -207,11 +207,11 @@ function reconstruct!(v, vl, vr, cellindex, mesh, weights; γ1 = 0.998, ϵ=1e-6,
     β₀ =  smoothness_indicator(vl, cellindex, mesh)
     β₁ =  smoothness_indicator(v[:, cellindex], cellindex, mesh)
     β₂ =  smoothness_indicator(vr, cellindex, mesh)
-
     if variational
-        β₀ .+= 0.01*((vre - vl[end])^2 + (vle - vl[1])^2)
-        β₁ .+= 0.01*((vre - v[end, cellindex])^2 + (vle - v[1, cellindex])^2) 
-        β₂ .+= 0.01*((vre - vr[end])^2 + (vle - vr[1])^2) 
+        Δx² = (mesh.x[2, cellindex]- mesh.x[1, cellindex])^2
+        β₀ .+= Δx² * ((vre - vl[end])^2 + (vle - vl[1])^2)
+        β₁ .+= Δx² * ((vre - v[end, cellindex])^2 + (vle - v[1, cellindex])^2) 
+        β₂ .+= Δx² * ((vre - vr[end])^2 + (vle - vr[1])^2) 
     end
     β = [β₀ β₁ β₂]
     allw = 1 ./ ((ϵ .+ β) .^ 2)
@@ -275,6 +275,31 @@ function ssp3_step!(equations, mesh, cells, Δt; M = 0, weno=true, threshold = 0
     end
     equations[1].lhs.data .= u²
     equations[1].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[1].rhs)
+    return nothing
+end
+
+
+function ssp3_step_κ!(equations, mesh, cells, Δt; M = 0, weno=true, threshold = 0)
+    uⁿ = copy(equations[2].lhs.data)
+    equations[2].lhs.data .= uⁿ
+    if weno
+        weno_adjustment(uⁿ, mesh, cells, M = M,  threshold = threshold)
+    end
+    equations[2].lhs.data .= uⁿ
+    equations[1].lhs.data.data .= compute(equations[1].rhs)
+    u¹ = uⁿ + Δt * compute(equations[2].rhs)
+    if weno
+        weno_adjustment(u¹, mesh, cells, M = M,  threshold = threshold)
+    end
+    equations[2].lhs.data .= u¹
+    equations[1].lhs.data.data .= compute(equations[1].rhs)
+    u² = 3/4*uⁿ + 1/4*u¹ + (1/4*Δt) * compute(equations[2].rhs)
+    if weno 
+        weno_adjustment(u², mesh, cells, M = M,  threshold = threshold)
+    end
+    equations[2].lhs.data .= u²
+    equations[1].lhs.data.data .= compute(equations[1].rhs)
+    equations[2].lhs.data .= 1/3*uⁿ + 2/3*u² + (2/3*Δt) * compute(equations[2].rhs)
     return nothing
 end
 

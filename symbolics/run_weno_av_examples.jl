@@ -2,10 +2,20 @@ using JLD2
 include(pwd() * "/symbolics" * "/dg_eval_rules.jl")
 include(pwd() * "/symbolics" * "/weno_functions.jl")
 gr(size = (500,500))
-for jjj in [1] # [1, 2,3,4,5,6,7]
-    for quadrature_rule in [true] #[true, false]
-        for problemtype in ["advection"] # ["burgers", "advection"]
+theme(:juno)
+
+#=
+for jjj in [1,2,3,4,5,6,7]
+    for quadrature_rule in [true, false]
+        for problemtype in ["burgers", "advection"]
+=#
+
+jjj = 7
+quadrature_rule = false
+problemtype = "burgers"
+
 n = jjj
+scale = 1.0
 problem = problemtype
 inexact = quadrature_rule
 information = "doing n="*string(n)*"_inexact="*string(inexact)*"_problem="*problem
@@ -18,12 +28,12 @@ else
 end
 
 if problem == "burgers"
-    T = 1.5 
+    T = scale * 1.5 
 elseif problem=="advection"
     c = 1.5
-    T = 4π/c
+    T = scale * 4π/c
 else
-    T = 1.5 
+    T = scale * 1.5 
 end
 
 # Initial Condition
@@ -40,7 +50,9 @@ refine = fV * inv(V)
 avg = Diagonal(zeros(n+1))
 avg[1] = 1
 cells = V * avg * inv(V)
-
+Ω = IntervalDomain(0, 2π, periodic = true)
+a = Ω.a
+b = Ω.b
 mesh = create_mesh(Ω, elements = K, polynomial_order =  n) # Generate Uniform Periodic Mesh
 x = mesh.x
 weights = sum(mesh.M, dims = 1)
@@ -68,19 +80,28 @@ central = DGMetaData(mesh, u0, Rusanov(0.0));  # wrap derivative metadata
 rusanov = DGMetaData(mesh, u0, Rusanov(α));    # wrap derivative metadata
 u̇ = Data(u0);
 u = Field(Data(u0), field_md);
-
+Δu = 2.0 / (n-1/2)
+κbase = 1e-8
+kmax = Δx * α * ((n-1/2)/(n+1/2))
+κ0 = x .* 0 .+ κbase
+κ̇ = Data(κ0);
+κ = Field(Data(κ0) , field_md);
+∂xᶜ(a::AbstractExpression) = Gradient(a, central);
 ∂xᴿ(a::AbstractExpression) = Gradient(a, rusanov);
+activation = tanh((∂xᶜ(u)*(Δx/(Δu+eps(1.0))))^2) 
 dt = minimum([abs(Δx / α) * cfl, abs(Δx / maximum(abs.(u0))) * cfl ])
 dt = T / ceil(Int,T/dt)
 numsteps = ceil(Int,T/dt)
 if problem == "burgers"
     pde_equation = [
-        u̇ == -∂xᴿ(u*u)*0.5,
+        κ == -1*( (-κbase + 1 * (-kmax+κbase) * activation)),
+        u̇ == -∂xᴿ(u*u)*0.5 + ∂xᶜ( κ * ∂xᶜ(u)),
     ]
     criteria = 0.01*(mesh.x[2] - mesh.x[1])^2
 elseif problem == "advection"
     pde_equation = [
-        u̇ == -∂xᴿ(u*c)*0.5 ,
+        κ == -1*((-κbase + 1 * (-kmax+κbase) * activation)) ,
+        u̇ == -∂xᴿ(u*c)*0.5 + ∂xᶜ( κ * ∂xᶜ(u)),
     ]
     criteria = 0.01*(mesh.x[2] - mesh.x[1])^2
 else
@@ -93,7 +114,7 @@ modby = check > 0 ? check : floor(Int,numsteps/4)
 sol = []
 push!(sol, copy(u.data.data))
 for i in 1:numsteps   
-    ssp3_step!(pde_equation, mesh, cells, dt, M = criteria)
+    ssp3_step_κ!(pde_equation, mesh, cells, dt, M = criteria)
     if (i%modby)==0
         push!(sol, copy(u.data.data))
     end
@@ -104,8 +125,8 @@ else
     ylims = (-0.6, 1.6)
 end
 
-anim = @animate for i in eachindex(sol)
-
+# anim = @animate 
+for i in eachindex(sol)
     v = sol[i]
     i1, v̅ =  troubled_cells(v, mesh, cells, M = criteria)
     plt = plot(mesh.x, v, 
@@ -127,9 +148,12 @@ anim = @animate for i in eachindex(sol)
         ylabel = "u",
         xlabel = "x")
     end
+    display(plt)
+    sleep(0.05)
 end
-gif(anim, pwd() * "/fig/weno_"*problem*"_animation"*parameterlabel*".gif")
 
+gif(anim, pwd() * "/fig/weno_av_"*problem*"_animation"*parameterlabel*".gif")
+##
 
 if problem == "burgers"
     refsolution = jldopen("reference.jld2")
@@ -147,7 +171,7 @@ if problem == "burgers"
      xlims = (3.8,4.0), 
      linewidth = 3,
      label = false)
-    savefig(p1, pwd() * "/fig/weno_"*problem*"_ref_v_comp"*parameterlabel*"_weno.png")
+    savefig(p1, pwd() * "/fig/weno_av_"*problem*"_ref_v_comp"*parameterlabel*"_weno.png")
 else
     refx = refine * x
     refu  = @. (tanh((refx-3(b+a)/8)/ν)+1)*(tanh(-(refx-5(b+a)/8)/ν)+1)/4 * (0.1*sin(40π/(b-a) * refx) +2)
@@ -162,9 +186,10 @@ else
     refine*u.data.data, 
     linewidth = 3,
     label = false)
-    savefig(p1, pwd() * "/fig/weno_"*problem*"_ref_v_comp"*parameterlabel*".png")
+    savefig(p1, pwd() * "/fig/weno_av_"*problem*"_ref_v_comp"*parameterlabel*".png")
 end
-
+#=
 end
 end
 end
+=#

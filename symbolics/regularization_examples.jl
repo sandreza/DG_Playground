@@ -54,7 +54,7 @@ else
         u̇ == -∂xᴿ(u*u)*0.5  + ∂xᶜ( κ * ∂xᶜ(u)),
     ]
 end
-
+##
 pde_meta_data = Dict("name" => "Burgers Equation", "method" => "discontinuous Galerkin")
 pde_system = PDESystem(pde_equation,
                        Ω;
