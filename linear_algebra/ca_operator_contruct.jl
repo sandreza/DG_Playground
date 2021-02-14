@@ -25,7 +25,7 @@ ca_operator_constructor(h, Δt, κ¹, κ², L, K, n; μ = 1.0)
 # Comment
 The size of the matrix is  K(n+1) x K(n+1).
 """
-function ca_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0, inexact = false, freeflux=false, periodic = false, mass_matrix = false)
+function ca_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0, inexact = false, freeflux=false, periodic = false, mass_matrix = false, neglectflux = false)
     function calculate_hyperbolic_flux(x::Number)
         return x
     end
@@ -40,9 +40,12 @@ function ca_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0, inexact =
         κ∇Φ = params[3]       # diffusive state
         Φ.state .= u          # update state
         q = ∇⊗Φ               # calculate gradient
+        #=
         @. κ∇Φ.state = q      # store flux
         tmp =  ∇⋅κ∇Φ          # calculate tendency
         @. u̇ = tmp            # store it
+        =#
+        @. u̇ = q
         return nothing
     end
     xmin = 0.0 # left endpoint of domain
@@ -63,7 +66,7 @@ function ca_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0, inexact =
     neumann = true
     # Define hyperbolic flux
     α = 0.0 # Rusanov prameter
-    flux_type = Rusanov(α)
+    flux_type = neglectflux ? NeglectFlux() : Rusanov(α)
     if neumann
         field_bc = FreeFlux()
     else
@@ -83,7 +86,7 @@ function ca_operator_constructor(h, γ, κ¹, κ², L, K, n; μ = 1.0, inexact =
 
     # Define Diffusive flux
     α = 0.0 # Rusanov parameter
-    flux_type = Rusanov(α)
+    flux_type = neglectflux ? NeglectFlux() : Rusanov(α)
     if neumann
         field_bc = Dirichlet(bc...)
     else
@@ -161,17 +164,38 @@ xmin = 0.0 # left endpoint of domain
 xmax = L   # right endpoint of domain
 # 60, (n, K) = (30, 1) , (20, 2), (15, 3), (12, 4), (10, 5)
 K = 12
-n = 4
+n = 2
 G = Mesh(K, n, xmin, xmax) # Generate Mesh
 mass_matrix = false
 inexact = true
 constructor(h) = ca_operator_constructor(h, -1, κ¹, κ², L, K, n, μ = 0.0, inexact = inexact, freeflux = false, periodic = true, mass_matrix = mass_matrix)
+constructor2(h) = ca_operator_constructor(h, -1, κ¹, κ², L, K, n, μ = 0.0, inexact = inexact, freeflux = false, periodic = true, mass_matrix = mass_matrix, neglectflux = true)
 Δ = constructor(L/2)[1]
+lΔ = constructor2(L/2)[1]
+ϕΔ = Δ - lΔ
+heatmap(reverse(threshold.(ϕΔ ), dims = 1)) 
+
+# filter
+
+nf = 2
+r = jacobiGL(0, 0, nf)
+V = vandermonde(r, 0, 0, nf)
+ℱ = V * Diagonal([1,1,0]) * inv(V)
+function filter_operator!(Ax, x)
+    Ax .= ℱ * x
+    return nothing
+end
+
+F,b = build_operator(filter_operator!, G, mass_matrix = mass_matrix)
+
+
 if mass_matrix
     Δ = Symmetric(Δ)
 end
 heatmap(reverse(threshold.(Δ), dims = 1)) 
-λ, vΔ =  eigen(Δ)
+λ, vΔ =  eigen(  F * Δ * Δ * F )
+
+#=
 Δ² = Δ * Δ
 
 test = cos.(2π/L * G.x)
@@ -182,9 +206,10 @@ plot(G.x, dxxtest, legend = false)
 plot(G.x, dx4test, legend = false)
 norm(dxxtest + (2π/L)^2 .* test) ./ ((2π/L)^2 )
 norm(dx4test - (2π/L)^4 .* test) ./ ((2π/L)^4 )
-
+=#
 plots = []
-for i in 1:9 
+shift = 12
+for i in 1+shift:9+shift
     ind = length(λ)-(i-1)
     eigval = @sprintf("%1.1f", real(λ[ind]))
     p1 = plot(G.x, real.(reshape(vΔ[:,ind], (n+1, K))), legend = false, title = "λ=" * eigval)
